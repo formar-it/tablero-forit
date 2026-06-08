@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Kanban Forit",
+  "schemaVersion": 1,
+  "description": "Tablero Kanban FORIT — vista personal de Vicky (HOY / SEGUIMIENTO / MENSUAL / TERMINADAS) + vista del Equipo TL. Tareas cargadas desde notas Gemini vía scheduled task diario.",
+  "mcpTools": [
+    "mcp__edd0bb6e-8680-4493-8ada-4c142d2a6419__search_threads"
+  ],
+  "mcpServerNames": [
+    "Gmail"
+  ]
+}
+</script>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Tablero FORIT</title>
+<style>
+:root { color-scheme: light; --hoy:#2563eb; --seg:#d97706; --men:#7c3aed; --done:#16a34a; --bg:#f1f5f9; --white:#ffffff; --border:#e2e8f0; --text:#0f172a; --muted:#64748b; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;min-height:100vh;}
+.header{background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);color:white;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.header h1{font-size:16px;font-weight:700;}
+.header-sub{font-size:11px;opacity:0.8;}
+.header-actions{display:flex;gap:8px;}
+.btn-wsp{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;}
+.btn-wsp:hover{background:rgba(255,255,255,0.25);}
+.tabs{display:flex;background:white;border-bottom:1px solid var(--border);padding:0 16px;}
+.tab{padding:10px 16px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;}
+.tab.activo{color:var(--hoy);border-bottom-color:var(--hoy);}
+.stats-bar{display:flex;gap:8px;padding:10px 16px;background:white;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.stat-chip{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;cursor:pointer;}
+.stat-chip.hoy{background:#dbeafe;color:#1e40af;}
+.stat-chip.seg{background:#fef3c7;color:#92400e;}
+.stat-chip.men{background:#ede9fe;color:#5b21b6;}
+.stat-chip.done{background:#dcfce7;color:#166534;}
+.stat-chip.imp{background:#fee2e2;color:#dc2626;}
+.board{display:flex;gap:12px;padding:12px 16px;overflow-x:auto;min-height:calc(100vh - 140px);align-items:flex-start;}
+.col{background:white;border-radius:10px;border:1px solid var(--border);min-width:240px;max-width:260px;flex:1;display:flex;flex-direction:column;max-height:calc(100vh - 160px);}
+.col-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.col-title{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.col-title .dot{width:8px;height:8px;border-radius:50%;}
+.dot-hoy{background:var(--hoy);}
+.dot-seg{background:var(--seg);}
+.dot-men{background:var(--men);}
+.dot-done{background:var(--done);}
+.col-count{font-size:11px;font-weight:700;background:var(--bg);color:var(--muted);padding:1px 7px;border-radius:99px;}
+.col-hint{font-size:10px;color:var(--muted);padding:4px 12px 6px;flex-shrink:0;}
+.col-cards{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;}
+.btn-add{margin:6px 8px 8px;padding:6px 10px;border:1px dashed #cbd5e1;background:transparent;color:var(--muted);font-size:11px;font-weight:600;border-radius:6px;cursor:pointer;text-align:left;transition:all 0.15s;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.btn-add:hover{border-color:var(--hoy);color:var(--hoy);background:#eff6ff;}
+.card{background:white;border-radius:8px;padding:10px 10px 8px;border:1px solid var(--border);cursor:pointer;transition:box-shadow 0.15s;position:relative;}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.card.imp-card{border-left:3px solid #dc2626;}
+.card.hoy-card{border-left:3px solid var(--hoy);}
+.card.seg-card{border-left:3px solid var(--seg);}
+.card.men-card{border-left:3px solid var(--men);}
+.card-top{display:flex;align-items:flex-start;gap:8px;}
+.card-check input{width:15px;height:15px;cursor:pointer;accent-color:var(--done);margin-top:2px;flex-shrink:0;}
+.card-body{flex:1;min-width:0;}
+.card-title{font-size:12px;font-weight:500;line-height:1.4;color:var(--text);}
+.card.terminada .card-title{text-decoration:line-through;color:var(--muted);}
+.card-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
+.chip{font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;text-transform:uppercase;letter-spacing:0.03em;}
+.chip-coordi{background:#fce7f3;color:#be185d;}
+.chip-liga{background:#fef3c7;color:#92400e;}
+.chip-zlo,.chip-zl{background:#e0f2fe;color:#0369a1;}
+.chip-amia{background:#ede9fe;color:#6d28d9;}
+.chip-power{background:#dbeafe;color:#1d4ed8;}
+.chip-bda{background:#e0e7ff;color:#3730a3;}
+.chip-elclick{background:#dcfce7;color:#166534;}
+.chip-personal{background:#fbcfe8;color:#9d174d;}
+.chip-santander{background:#fee2e2;color:#b91c1c;}
+.chip-quality{background:#cffafe;color:#155e75;}
+.chip-muni{background:#e0f2fe;color:#075985;}
+.chip-imp{background:#dc2626;color:white;}
+.chip-gemini{background:#f1f5f9;color:#475569;font-style:italic;text-transform:none;}
+.chip-recurrente{background:#ede9fe;color:#5b21b6;}
+.card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:7px;gap:6px;}
+.card-meta{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.card-date.red{color:#dc2626;font-weight:600;}
+.card-date.amber{color:#d97706;font-weight:600;}
+.card-actions{display:flex;gap:4px;opacity:0;transition:opacity 0.15s;}
+.card:hover .card-actions{opacity:1;}
+.card-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:10px;padding:2px 5px;border-radius:4px;cursor:pointer;}
+.card-btn:hover{border-color:var(--hoy);color:var(--hoy);}
+.card-resp{font-size:9px;color:var(--muted);background:var(--bg);padding:1px 5px;border-radius:3px;}
+.promo-badge{font-size:9px;font-weight:700;background:#fef3c7;color:#d97706;padding:1px 5px;border-radius:3px;white-space:nowrap;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.visible{display:flex;}
+.modal{background:white;border-radius:12px;padding:20px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:14px;font-weight:700;margin-bottom:14px;}
+.form-row{margin-bottom:12px;}
+.form-row label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;}
+.form-row input,.form-row select,.form-row textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;}
+.form-row textarea{resize:vertical;min-height:50px;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:2px solid var(--hoy);border-color:var(--hoy);}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.btn-primary{background:var(--hoy);color:white;border:0;padding:7px 16px;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border);padding:7px 16px;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;}
+.wsp-modal .wsp-option{background:var(--bg);border-radius:8px;padding:12px;margin-bottom:10px;}
+.wsp-modal .wsp-option h4{font-size:12px;font-weight:700;margin-bottom:4px;}
+.wsp-modal .wsp-option p{font-size:11px;color:var(--muted);line-height:1.5;}
+.wsp-modal .wsp-tag{display:inline-block;background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-bottom:4px;}
+.team-view{padding:12px 16px;display:flex;flex-direction:column;gap:14px;}
+.team-persona{background:white;border-radius:10px;border:1px solid var(--border);overflow:hidden;}
+.team-persona-head{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.team-persona-name{font-size:13px;font-weight:700;}
+.team-persona-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--bg);color:var(--muted);}
+.team-tasks{padding:8px 14px 10px;display:none;flex-direction:column;gap:5px;}
+.team-tasks.open{display:flex;}
+.team-task{font-size:11px;padding:6px 8px;border-radius:5px;border:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.team-task input{width:14px;height:14px;accent-color:var(--done);cursor:pointer;}
+.team-task-text{flex:1;line-height:1.3;}
+.team-task.terminada .team-task-text{text-decoration:line-through;color:var(--muted);}
+.team-task-date{font-size:10px;color:var(--muted);white-space:nowrap;}
+.team-task-date.red{color:#dc2626;font-weight:600;}
+.empty-col{color:var(--muted);font-size:11px;font-style:italic;text-align:center;padding:16px 0;}
+.filter-row{padding:8px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border);background:white;}
+.filter-row select{font-size:11px;border:1px solid var(--border);border-radius:5px;padding:3px 8px;color:var(--text);}
+.filter-row label{font-size:11px;font-weight:500;color:var(--muted);}
+.search-input{font-size:11px;border:1px solid var(--border);border-radius:5px;padding:3px 8px;min-width:120px;}
+/* QUICK ADD */
+.quick-add-bar{background:white;border-bottom:2px solid var(--hoy);padding:10px 16px;display:flex;gap:8px;align-items:center;}
+.quick-add-bar input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;transition:border 0.15s;}
+.quick-add-bar input:focus{outline:none;border-color:var(--hoy);box-shadow:0 0 0 3px rgba(37,99,235,0.1);}
+.quick-add-bar button{background:var(--hoy);color:white;border:0;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.quick-add-bar button:hover{background:#1d4ed8;}
+.link-bar{background:#f8fafc;border-bottom:1px solid var(--border);padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);}
+.link-bar a{color:var(--hoy);font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px;}
+.link-bar a:hover{text-decoration:underline;}
+::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>&#128203; Tablero FORIT</h1>
+    <div class="header-sub" id="fecha-hoy">&#8212;</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-wsp" onclick="cargarGmail()" id="btn-gmail">&#11088; Cargar Gmail destacados</button>
+  </div>
+</div>
+
+<div class="link-bar">
+  &#128279; Abrí este tablero en el navegador:
+  <a href="https://claude.ai/artifacts/kanban-forit" target="_blank" id="link-online">&#127760; Abrir online</a>
+  <span id="link-copiado" style="display:none;color:var(--done);font-weight:600;">&#10003; ¡Link copiado!</span>
+  <button onclick="copiarLink()" style="margin-left:4px;background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--muted);">Copiar link</button>
+</div>
+
+<div class="tabs">
+  <div class="tab activo" data-tab="kanban" onclick="cambiarTab(this)">&#127800; Mi Kanban</div>
+  <div class="tab" data-tab="equipo" onclick="cambiarTab(this)">&#128101; Equipo TL</div>
+</div>
+
+<div id="view-kanban">
+  <div class="quick-add-bar">
+    <input type="text" id="quick-texto" placeholder="&#128204; Agregar tarea para HOY&#8230; (Enter para guardar)" onkeydown="if(event.key==='Enter')quickAdd()">
+    <button onclick="quickAdd()">&#10133; Agregar a HOY</button>
+  </div>
+  <div class="stats-bar" id="stats-bar"></div>
+  <div class="filter-row">
+    <label>Filtrar:</label>
+    <select id="filtro-proyecto" onchange="renderBoard()">
+      <option value="">Todos los proyectos</option>
+      <option value="coordi">Coordi</option>
+      <option value="liga">Liga</option>
+      <option value="zlo">ZLO</option>
+      <option value="amia">AMIA</option>
+      <option value="power">Empower</option>
+      <option value="bda">BDA</option>
+      <option value="elclick">El Click</option>
+      <option value="personal">Personal</option>
+    </select>
+    <input class="search-input" id="busqueda" placeholder="&#128269; Buscar&#8230;" oninput="renderBoard()">
+  </div>
+  <div class="board" id="board"></div>
+</div>
+
+<div id="view-equipo" style="display:none;">
+  <div class="stats-bar" id="stats-equipo"></div>
+  <div class="team-view" id="team-view"></div>
+</div>
+
+<div class="modal-overlay" id="modal-add" onclick="if(event.target===this)cerrarModal()">
+  <div class="modal">
+    <h3 id="modal-title">&#10133; Nueva tarea</h3>
+    <div class="form-row">
+      <label>Tarea *</label>
+      <textarea id="f-texto" placeholder="&#191;Qu&#233; hay que hacer?" rows="2"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Columna</label>
+      <select id="f-col">
+        <option value="hoy">&#128204; HOY</option>
+        <option value="seguimiento" selected>&#128260; SEGUIMIENTO (cada 5 d&#237;as)</option>
+        <option value="mensual">&#128197; MENSUAL (1 vez al mes)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Proyecto</label>
+      <select id="f-proyecto">
+        <option value="coordi">Coordi</option>
+        <option value="liga">Liga</option>
+        <option value="zlo">ZLO</option>
+        <option value="amia">AMIA</option>
+        <option value="power">Empower</option>
+        <option value="bda">BDA</option>
+        <option value="elclick">El Click</option>
+        <option value="santander">Santander</option>
+        <option value="muni">Municipio</option>
+        <option value="personal">&#128150; Personal</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Responsable</label>
+      <select id="f-resp">
+        <option value="vicky">Vicky</option>
+        <option value="lucio">Lucio</option>
+        <option value="martina">Martina</option>
+        <option value="nahuel">Nahuel/Fede</option>
+        <option value="agus">Agust&#237;n</option>
+        <option value="seba">Seba</option>
+        <option value="alex">Alex</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Fecha l&#237;mite (opcional)</label>
+      <input type="date" id="f-fecha">
+    </div>
+    <div class="form-row">
+      <label>Origen / contexto (opcional)</label>
+      <input type="text" id="f-origen" placeholder="Ej: Reuni&#243;n con cliente 05/06">
+    </div>
+    <div class="form-row">
+      <label style="display:flex;gap:8px;align-items:center;cursor:pointer;">
+        <input type="checkbox" id="f-imp" style="width:16px;height:16px;accent-color:#dc2626;">
+        &#128308; Marcar como IMPORTANTE
+      </label>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-primary" onclick="guardarTarea()">&#9989; Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-wsp" onclick="if(event.target===this)document.getElementById('modal-wsp').classList.remove('visible')">
+  <div class="modal wsp-modal">
+    <h3>&#128241; Agregar tareas por WhatsApp</h3>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:12px;">Hay tres opciones seg&#250;n lo que m&#225;s te sirva.</p>
+    <div class="wsp-option">
+      <span class="wsp-tag">F&#193;CIL</span>
+      <h4>&#128206; Mand&#225; el mensaje al chat de Cowork</h4>
+      <p>Desde WhatsApp, reenviar cualquier mensaje al chat de Claude Cowork. Claude lo procesa y agrega la tarea al tablero.</p>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="document.getElementById('modal-wsp').classList.remove('visible')">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var STORE_KEY = 'forit-kanban-v1';
+  var TEAM_KEY = 'forit-team-v1';
+  var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
+
+  var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  document.getElementById('fecha-hoy').textContent = dias[HOY.getDay()] + ' ' + HOY.getDate() + ' de ' + meses[HOY.getMonth()] + ', ' + HOY.getFullYear();
+
+  function loadData() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || { tareas: [] }; } catch(e) { return { tareas: [] }; } }
+  function saveData(d) { try { localStorage.setItem(STORE_KEY, JSON.stringify(d)); } catch(e) {} }
+  function loadTeam() { try { return JSON.parse(localStorage.getItem(TEAM_KEY)) || { tareas: [] }; } catch(e) { return { tareas: [] }; } }
+  function saveTeam(d) { try { localStorage.setItem(TEAM_KEY, JSON.stringify(d)); } catch(e) {} }
+
+  var data = loadData();
+  var teamData = loadTeam();
+
+  if (data.tareas.length === 0) {
+    var ahora0 = new Date().toISOString();
+    data.tareas = [
+      { id:'seed1', texto:'Subsanar observaciones TAD para Mecenazgo (EX-2026-15509983-GCABA-DGDCC)', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-09', origen:'Gmail ⭐ GCBA 05/06', imp:true, addedDate:ahora0, createdAt:ahora0 },
+      { id:'seed2', texto:'ALERTA: revisar presupuesto de JR proyecto BDA Notificaciones (etapa 3)', col:'hoy', proyecto:'bda', resp:'vicky', fecha:'2026-06-08', origen:'Airtable 04/06', imp:true, addedDate:ahora0, createdAt:ahora0 },
+      { id:'seed3', texto:'Enviar mail de seguimiento semanal al municipio sobre propuesta impacto social', col:'seguimiento', proyecto:'muni', resp:'vicky', fecha:'', origen:'Consejo Asesor 05/06', imp:false, addedDate:ahora0, createdAt:ahora0 },
+      { id:'seed4', texto:'Preparar informe semestral ANPower (con Vic F)', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-12', origen:'Consejo Asesor 05/06', imp:true, addedDate:ahora0, createdAt:ahora0 },
+      { id:'seed5', texto:'Contactar grupos de la red BNI para gestionar referidos comerciales', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'2026-06-12', origen:'Consejo Asesor 05/06', imp:false, addedDate:ahora0, createdAt:ahora0 },
+      { id:'seed6', texto:'Enviar mail seguimiento a Florencia Bacigalupo (Accenture)', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-08', origen:'Consejo Asesor 05/06', imp:false, addedDate:ahora0, createdAt:ahora0 },
+      { id:'seed7', texto:'Programar reunión urgente con cliente ZLO para mostrar avances del sprint', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-08', origen:'Demo ZLO 05/06', imp:true, addedDate:ahora0, createdAt:ahora0 },
+      { id:'seed8', texto:'Gestionar con Bruno acceso del equipo Liga al deploy y logs de producción', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'2026-06-08', origen:'Demo Liga cliente 05/06', imp:true, addedDate:ahora0, createdAt:ahora0 },
+      { id:'seed9', texto:'Reenviar a Javier el link del entorno de desarrollo de La Liga', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'2026-06-08', origen:'Demo Liga cliente 05/06', imp:false, addedDate:ahora0, createdAt:ahora0 },
+      { id:'seed10', texto:'Revisar match de PRs en Airtable (chequeo recurrente de los viernes)', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'2026-06-12', origen:'Recurrente', imp:false, addedDate:ahora0, createdAt:ahora0 },
+      { id:'seed11', texto:'Avanzar con Santander — seguimiento propuesta', col:'seguimiento', proyecto:'santander', resp:'vicky', fecha:'', origen:'Pendiente anterior', imp:true, addedDate:new Date('2026-04-29').toISOString(), createdAt:new Date('2026-04-29').toISOString() },
+      { id:'seed12', texto:'Coordinar reunión con Bruno y Vic F sobre etapa 3 de Reconocimiento', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 05/06', imp:false, addedDate:ahora0, createdAt:ahora0 },
+      { id:'rec1', texto:'Cambios del Click — revisión y deploy semanal', col:'seguimiento', proyecto:'elclick', resp:'vicky', fecha:'', origen:'Recurrente semanal', imp:false, recurrente:'semanal', addedDate:ahora0, createdAt:ahora0, lastMovedToHoy:new Date('2026-06-01').toISOString() },
+      { id:'rec2', texto:'Deploy clientes — verificar deploys de todos los proyectos', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Recurrente semanal', imp:false, recurrente:'semanal', addedDate:ahora0, createdAt:ahora0, lastMovedToHoy:new Date('2026-06-01').toISOString() },
+      { id:'rec3', texto:'Tabla GitHub ↔ Airtable — revisar match de PRs', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Recurrente semanal — viernes 10hs', imp:false, recurrente:'semanal', addedDate:ahora0, createdAt:ahora0, lastMovedToHoy:new Date('2026-06-01').toISOString() },
+    ];
+    saveData(data);
+  }
+
+  if (teamData.tareas.length === 0) {
+    var ahora1 = new Date().toISOString();
+    teamData.tareas = [
+      { id:'t1', texto:'Completar migración repo Reconocimiento a Forit (urgente, 2 sem de retraso)', resp:'seba', proyecto:'power', fecha:'2026-06-08', imp:true, done:false, origen:'Daily TL 05/06', createdAt:ahora1 },
+      { id:'t2', texto:'Terminar migración completa AMIA y Cuidamia', resp:'nahuel', proyecto:'amia', fecha:'2026-06-05', imp:true, done:false, origen:'Daily TL 05/06', createdAt:ahora1 },
+      { id:'t3', texto:'Resolver error de producción Liga (PRIORIDAD #1)', resp:'martina', proyecto:'liga', fecha:'2026-06-08', imp:true, done:false, origen:'Demo Liga 05/06', createdAt:ahora1 },
+      { id:'t4', texto:'Realizar code reviews equipo Reconocimiento', resp:'alex', proyecto:'power', fecha:'2026-06-08', imp:true, done:false, origen:'Daily TL 05/06', createdAt:ahora1 },
+      { id:'t5', texto:'Foguearse con BDA (leer planif. etapa 3, hablar con Martina)', resp:'alex', proyecto:'bda', fecha:'2026-06-08', imp:true, done:false, origen:'Daily TL 05/06', createdAt:ahora1 },
+      { id:'t6', texto:'Preparar demo Empower viernes 12/06', resp:'agus', proyecto:'power', fecha:'2026-06-12', imp:true, done:false, origen:'Daily TL 05/06', createdAt:ahora1 },
+      { id:'t7', texto:'Completar autoevaluación TL', resp:'lucio', proyecto:'coordi', fecha:'2026-06-08', imp:false, done:false, origen:'Daily TL 05/06', createdAt:ahora1 },
+      { id:'t8', texto:'Completar autoevaluación TL', resp:'agus', proyecto:'coordi', fecha:'2026-06-08', imp:false, done:false, origen:'Daily TL 05/06', createdAt:ahora1 },
+      { id:'t9', texto:'Implementar frontend métricas analítica de stock ZLO (próximo sprint)', resp:'lucio', proyecto:'zlo', fecha:'2026-06-12', imp:true, done:false, origen:'Demo ZLO 05/06', createdAt:ahora1 },
+      { id:'t10', texto:'Organizar tablero Reconocimiento y revisar estado equipo', resp:'alex', proyecto:'power', fecha:'2026-06-05', imp:true, done:false, origen:'Daily TL 05/06', createdAt:ahora1 },
+    ];
+    saveTeam(teamData);
+  }
+
+  function autoPromote() {
+    var changed = false;
+    data.tareas.forEach(function(t) {
+      if (t.recurrente === 'semanal' && (t.col === 'terminadas' || t.done)) {
+        var lastDone = new Date(t.completedAt || t.lastMovedToHoy || t.createdAt);
+        lastDone.setHours(0,0,0,0);
+        var diffDays = Math.round((HOY - lastDone) / (1000*60*60*24));
+        if (diffDays >= 7) { t.col='hoy'; t.done=false; t.lastMovedToHoy=new Date().toISOString(); delete t.completedAt; t.promoBadge='🔁 Semanal'; changed=true; }
+        return;
+      }
+      if (t.col === 'seguimiento') {
+        var ciclo = t.recurrente === 'semanal' ? 7 : 5;
+        var added = new Date(t.lastMovedToHoy || t.addedDate || t.createdAt);
+        added.setHours(0,0,0,0);
+        var diffDays2 = Math.round((HOY - added) / (1000*60*60*24));
+        if (diffDays2 >= ciclo) { t.col='hoy'; t.lastMovedToHoy=new Date().toISOString(); t.promoBadge=t.recurrente==='semanal'?'🔁 Semanal':('📌 Promovida ('+diffDays2+'d)'); changed=true; }
+      }
+      if (t.col === 'mensual') {
+        var lastMove = t.lastMovedToHoy ? new Date(t.lastMovedToHoy) : new Date(t.addedDate || t.createdAt);
+        lastMove.setHours(0,0,0,0);
+        var diffDays3 = Math.round((HOY - lastMove) / (1000*60*60*24));
+        if (diffDays3 >= 30) { t.col='hoy'; t.lastMovedToHoy=new Date().toISOString(); t.promoBadge='📌 Mensual ('+diffDays3+'d)'; changed=true; }
+      }
+    });
+    if (changed) saveData(data);
+  }
+
+  (function importarNuevas() {
+    var ahora = new Date().toISOString();
+    var nuevas = [
+      { id:'imp01', texto:'Hablar con Emilio Basa', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp02', texto:'Escribirle a todos los hubs de emprendedores', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp03', texto:'Jardín Montessori — mandar mail a todos', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp04', texto:'Juntarse con el Negro para buscar clientes', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp05', texto:'Escribirle a los participantes de NAVES', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp06', texto:'Contactar a María Eugenia Mata (Comisión 6) por WhatsApp — recursos humanos', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp07', texto:'Mandarle mensaje a Cristian Cores por LinkedIn', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp08', texto:'Revisar el mercado de cada producto para revenderlo', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp09', texto:'Brief de FORIT para la AAT', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp10', texto:'Pedirle ayuda a los egresados para conseguir clientes', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp11', texto:'Presupuesto para BDA Notificaciones', col:'hoy', proyecto:'bda', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'imp12', texto:'Hablar con jefe de Tami España', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp13', texto:'Seguir a Juli (amiga del Negro) por LinkedIn — ayuda para FORIT', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Cargada manualmente 07/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'imp14', texto:'Enviar presupuesto web El Turístologo a Salvador Dell\'Acqua — cambios "Ver más" → "Reservar"', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-08', origen:'Gmail ⭐ salvador@utriper.com 03/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'imp15', texto:'Empower informe 2 — vence plazo (alerta Airtable)', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-08', origen:'Gmail ⭐ Airtable 02/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'imp16', texto:'Historias que inspiran: de FORIT a su primer empleo tech — vence plazo (alerta Airtable)', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-08', origen:'Gmail ⭐ Airtable 02/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'imp17', texto:'Publicar certificado Claude 101 en LinkedIn', col:'hoy', proyecto:'personal', resp:'vicky', fecha:'', origen:'Gmail ⭐ Anthropic 08/06', imp:false, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsExistentes = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agregadas = 0;
+    nuevas.forEach(function(t) { if (!idsExistentes.has(t.id)) { data.tareas.push(t); agregadas++; } });
+    if (agregadas > 0) saveData(data);
+  })();
+
+  autoPromote();
+
+  function diffDias(fechaStr) {
+    if (!fechaStr) return null;
+    var d = new Date(fechaStr); d.setHours(0,0,0,0);
+    return Math.round((d - HOY) / (1000*60*60*24));
+  }
+  function formatFecha(fechaStr) {
+    if (!fechaStr) return '';
+    var parts = fechaStr.split('-');
+    return parts[2] + '/' + parts[1];
+  }
+  function fechaDisplay(fechaStr) {
+    if (!fechaStr) return { text:'', cls:'' };
+    var diff = diffDias(fechaStr);
+    if (diff < 0) return { text:'Venció ' + formatFecha(fechaStr) + ' (hace ' + Math.abs(diff) + 'd)', cls:'red' };
+    if (diff === 0) return { text:'Hoy ' + formatFecha(fechaStr), cls:'red' };
+    if (diff === 1) return { text:'Mañana ' + formatFecha(fechaStr), cls:'amber' };
+    if (diff <= 7) return { text:'📅 ' + formatFecha(fechaStr) + ' (' + diff + 'd)', cls:'' };
+    return { text:'📅 ' + formatFecha(fechaStr), cls:'' };
+  }
+  var RESP_EMOJI = { vicky:'🌸', lucio:'🚦', martina:'⚽', nahuel:'🎯', agus:'✂️', seba:'🚀', alex:'🏅', '':'—' };
+  var PROJ_NAMES = { coordi:'Coordi', liga:'Liga', zlo:'ZLO', zl:'ZL Store', amia:'AMIA', power:'Empower', bda:'BDA', elclick:'El Click', personal:'Personal', santander:'Santander', muni:'Municipio', quality:'Quality' };
+
+  function renderBoard() {
+    var filtProj = document.getElementById('filtro-proyecto').value;
+    var busq = document.getElementById('busqueda').value.toLowerCase();
+    var tareas = data.tareas.filter(function(t){ return t.col !== 'terminadas'; });
+    if (filtProj) tareas = tareas.filter(function(t){ return t.proyecto === filtProj; });
+    if (busq) tareas = tareas.filter(function(t){ return t.texto.toLowerCase().indexOf(busq) >= 0; });
+    var terminadas = data.tareas.filter(function(t){ return t.col === 'terminadas'; });
+    var cols = [
+      { id:'hoy', label:'HOY', icon:'📌', dot:'dot-hoy', hint:'Tareas de hoy y vencidas.' },
+      { id:'seguimiento', label:'SEGUIMIENTO', icon:'🔄', dot:'dot-seg', hint:'Se mueve a HOY cada 5 días.' },
+      { id:'mensual', label:'MENSUAL', icon:'📅', dot:'dot-men', hint:'Aparece en HOY una vez por mes.' },
+      { id:'terminadas', label:'TERMINADAS', icon:'✅', dot:'dot-done', hint:terminadas.length + ' tareas completadas.' },
+    ];
+    var board = document.getElementById('board');
+    board.innerHTML = '';
+    cols.forEach(function(col) {
+      var colTareas = col.id === 'terminadas' ? terminadas : tareas.filter(function(t){ return t.col === col.id; });
+      var pending = colTareas.filter(function(t){ return !t.done; }).length;
+      var colEl = document.createElement('div');
+      colEl.className = 'col';
+      colEl.innerHTML = '<div class="col-head"><div class="col-title"><div class="dot ' + col.dot + '"></div>' + col.icon + ' ' + col.label + '</div><span class="col-count">' + pending + '</span></div><div class="col-hint">' + col.hint + '</div><div class="col-cards" id="cards-' + col.id + '"></div>' + (col.id !== 'terminadas' ? '<button class="btn-add" onclick="abrirModal(\'' + col.id + '\')">&#10133; Agregar tarea</button>' : '');
+      board.appendChild(colEl);
+      var cardsEl = document.getElementById('cards-' + col.id);
+      if (colTareas.length === 0) { cardsEl.innerHTML = '<div class="empty-col">' + (col.id === 'terminadas' ? '🎉 No hay terminadas aún' : 'Sin tareas') + '</div>'; return; }
+      colTareas.forEach(function(t) {
+        var fd = fechaDisplay(t.fecha);
+        var card = document.createElement('div');
+        card.className = 'card ' + (t.col==='hoy'?'hoy-card':t.col==='seguimiento'?'seg-card':t.col==='mensual'?'men-card':'') + (t.imp?' imp-card':'') + (t.done?' terminada':'');
+        card.draggable = true;
+        card.dataset.id = t.id;
+        card.addEventListener('dragstart', onDragStart);
+        var chips = '';
+        if (t.proyecto) chips += '<span class="chip chip-' + t.proyecto + '">' + (PROJ_NAMES[t.proyecto]||t.proyecto) + '</span>';
+        if (t.imp) chips += '<span class="chip chip-imp">Importante</span>';
+        if (t.promoBadge) chips += '<span class="promo-badge">' + t.promoBadge + '</span>';
+        if (t.recurrente) chips += '<span class="chip chip-recurrente">🔁 Semanal</span>';
+        var moveBtns = '';
+        if (t.col !== 'hoy') moveBtns += '<button class="card-btn" onclick="moverCol(\'' + t.id + '\',\'hoy\')">📌 HOY</button>';
+        if (t.col !== 'seguimiento' && t.col !== 'terminadas') moveBtns += '<button class="card-btn" onclick="moverCol(\'' + t.id + '\',\'seguimiento\')">🔄</button>';
+        if (t.col !== 'mensual' && t.col !== 'terminadas') moveBtns += '<button class="card-btn" onclick="moverCol(\'' + t.id + '\',\'mensual\')">📅</button>';
+        if (t.col === 'terminadas') moveBtns += '<button class="card-btn" onclick="moverCol(\'' + t.id + '\',\'hoy\')">↩</button>';
+        moveBtns += '<button class="card-btn" onclick="toggleDone(\'' + t.id + '\',true)">✅</button>';
+        card.innerHTML = '<div class="card-top"><div class="card-check"><input type="checkbox" ' + (t.done?'checked':'') + ' onchange="toggleDone(\'' + t.id + '\',this.checked)"></div><div class="card-body"><div class="card-title">' + t.texto + '</div><div class="card-chips">' + chips + '</div></div></div><div class="card-actions">' + moveBtns + '</div><div class="card-footer"><div class="card-meta">' + (fd.text?'<span class="card-date ' + fd.cls + '">' + fd.text + '</span>':'') + (t.resp && t.resp!=='vicky'?'<span class="card-resp">' + (RESP_EMOJI[t.resp]||'') + ' ' + t.resp + '</span>':'') + '</div><div style="font-size:9px;color:var(--muted);font-style:italic;text-align:right;">' + (t.origen||'') + '</div></div>';
+        cardsEl.appendChild(card);
+      });
+    });
+    renderStats();
+  }
+
+  function renderStats() {
+    var hoy = data.tareas.filter(function(t){ return t.col==='hoy' && !t.done; }).length;
+    var seg = data.tareas.filter(function(t){ return t.col==='seguimiento' && !t.done; }).length;
+    var men = data.tareas.filter(function(t){ return t.col==='mensual' && !t.done; }).length;
+    var done = data.tareas.filter(function(t){ return t.done || t.col==='terminadas'; }).length;
+    var imp = data.tareas.filter(function(t){ return t.imp && !t.done && t.col!=='terminadas'; }).length;
+    document.getElementById('stats-bar').innerHTML = '<span class="stat-chip hoy">📌 HOY: ' + hoy + '</span><span class="stat-chip seg">🔄 Seguimiento: ' + seg + '</span><span class="stat-chip men">📅 Mensual: ' + men + '</span><span class="stat-chip done">✅ Terminadas: ' + done + '</span>' + (imp>0?'<span class="stat-chip imp">🔴 Importantes: ' + imp + '</span>':'');
+  }
+
+  function renderTeam() {
+    var personas = [
+      { id:'lucio', nombre:'🚦 Lucio · TL ZL Store', color:'#7c3aed' },
+      { id:'martina', nombre:'⚽ Martina · TL Liga', color:'#d97706' },
+      { id:'agus', nombre:'✂️ Agus · TL Empower', color:'#2563eb' },
+      { id:'seba', nombre:'🚀 Seba · DevOps', color:'#0891b2' },
+      { id:'nahuel', nombre:'🎯 Nahuel/Fede · TL AMIA', color:'#059669' },
+      { id:'alex', nombre:'🏅 Alex · TL Reconocimiento + BDA', color:'#ea580c' },
+    ];
+    var done = teamData.tareas.filter(function(t){ return t.done; }).length;
+    var pend = teamData.tareas.filter(function(t){ return !t.done; }).length;
+    document.getElementById('stats-equipo').innerHTML = '<span class="stat-chip hoy">📋 Total: ' + teamData.tareas.length + '</span><span class="stat-chip seg">⏳ Pendientes: ' + pend + '</span><span class="stat-chip done">✅ Terminadas: ' + done + '</span>';
+    var tv = document.getElementById('team-view');
+    tv.innerHTML = '';
+    personas.forEach(function(p) {
+      var tareas = teamData.tareas.filter(function(t){ return t.resp === p.id; });
+      if (tareas.length === 0) return;
+      var pendCount = tareas.filter(function(t){ return !t.done; }).length;
+      var div = document.createElement('div');
+      div.className = 'team-persona';
+      div.style.borderLeft = '4px solid ' + p.color;
+      var rows = tareas.map(function(t) {
+        var fd = fechaDisplay(t.fecha);
+        return '<div class="team-task ' + (t.done?'terminada':'') + '"><input type="checkbox" ' + (t.done?'checked':'') + ' onchange="toggleTeamDone(\'' + t.id + '\',this.checked)"><span class="team-task-text">' + (t.imp?'🔴 ':'') + t.texto + (t.proyecto?(' <span class="chip chip-' + t.proyecto + '" style="font-size:9px">' + (PROJ_NAMES[t.proyecto]||t.proyecto) + '</span>'):'') + '</span>' + (fd.text?'<span class="team-task-date ' + fd.cls + '">' + fd.text + '</span>':'') + '</div>';
+      }).join('');
+      div.innerHTML = '<div class="team-persona-head" onclick="this.nextElementSibling.classList.toggle(\'open\')"><span class="team-persona-name" style="color:' + p.color + '">' + p.nombre + '</span><span class="team-persona-badge">' + pendCount + ' pendientes</span></div><div class="team-tasks open" id="team-' + p.id + '">' + rows + '<button class="btn-add" onclick="abrirModalTeam(\'' + p.id + '\')" style="margin:6px 0 0">&#10133; Agregar</button></div>';
+      tv.appendChild(div);
+    });
+    var addDiv = document.createElement('div');
+    addDiv.innerHTML = '<button class="btn-add" style="width:100%;justify-content:center;" onclick="abrirModalTeam(\'\')">&#10133; Nueva tarea de equipo</button>';
+    tv.appendChild(addDiv);
+  }
+
+  var currentCol = 'seguimiento';
+
+  function abrirModal(col) {
+    currentCol = col || 'seguimiento';
+    document.getElementById('f-col').value = currentCol;
+    document.getElementById('f-texto').value = '';
+    document.getElementById('f-fecha').value = '';
+    document.getElementById('f-origen').value = '';
+    document.getElementById('f-imp').checked = false;
+    document.getElementById('f-resp').value = 'vicky';
+    document.getElementById('modal-title').textContent = 'Nueva tarea en ' + currentCol.toUpperCase();
+    document.getElementById('modal-add').classList.add('visible');
+    setTimeout(function(){ document.getElementById('f-texto').focus(); }, 100);
+  }
+
+  function abrirModalTeam(resp) {
+    document.getElementById('f-col').value = 'hoy';
+    document.getElementById('f-texto').value = '';
+    document.getElementById('f-fecha').value = '';
+    document.getElementById('f-origen').value = '';
+    document.getElementById('f-imp').checked = false;
+    document.getElementById('f-resp').value = resp || 'vicky';
+    document.getElementById('modal-title').textContent = 'Nueva tarea del equipo';
+    document.getElementById('modal-add').dataset.mode = 'team';
+    document.getElementById('modal-add').classList.add('visible');
+    setTimeout(function(){ document.getElementById('f-texto').focus(); }, 100);
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-add').classList.remove('visible');
+    document.getElementById('modal-add').dataset.mode = '';
+  }
+
+  function guardarTarea() {
+    var texto = document.getElementById('f-texto').value.trim();
+    if (!texto) { alert('Escribí qué hay que hacer'); return; }
+    var isTeam = document.getElementById('modal-add').dataset.mode === 'team';
+    var ahora = new Date().toISOString();
+    if (isTeam) {
+      teamData.tareas.push({ id:'team-'+Date.now(), texto:texto, resp:document.getElementById('f-resp').value, proyecto:document.getElementById('f-proyecto').value, fecha:document.getElementById('f-fecha').value, origen:document.getElementById('f-origen').value, imp:document.getElementById('f-imp').checked, done:false, createdAt:ahora });
+      saveTeam(teamData); renderTeam();
+    } else {
+      data.tareas.push({ id:'k-'+Date.now(), texto:texto, col:document.getElementById('f-col').value, proyecto:document.getElementById('f-proyecto').value, resp:document.getElementById('f-resp').value, fecha:document.getElementById('f-fecha').value, origen:document.getElementById('f-origen').value, imp:document.getElementById('f-imp').checked, done:false, addedDate:ahora, createdAt:ahora });
+      saveData(data); renderBoard();
+    }
+    cerrarModal();
+  }
+
+  function toggleDone(id, checked) {
+    var t = data.tareas.find(function(x){ return x.id === id; });
+    if (!t) return;
+    t.done = checked; t.col = checked ? 'terminadas' : 'hoy';
+    if (checked) t.completedAt = new Date().toISOString();
+    saveData(data); renderBoard();
+  }
+
+  function toggleTeamDone(id, checked) {
+    var t = teamData.tareas.find(function(x){ return x.id === id; });
+    if (!t) return;
+    t.done = checked;
+    if (checked) t.completedAt = new Date().toISOString();
+    saveTeam(teamData); renderTeam();
+  }
+
+  function moverCol(id, col) {
+    var t = data.tareas.find(function(x){ return x.id === id; });
+    if (!t) return;
+    t.col = col; t.done = false;
+    if (col === 'hoy') t.lastMovedToHoy = new Date().toISOString();
+    delete t.promoBadge;
+    saveData(data); renderBoard();
+  }
+
+  function cambiarTab(el) {
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('activo'); });
+    el.classList.add('activo');
+    var tab = el.dataset.tab;
+    document.getElementById('view-kanban').style.display = tab === 'kanban' ? '' : 'none';
+    document.getElementById('view-equipo').style.display = tab === 'equipo' ? '' : 'none';
+    if (tab === 'equipo') renderTeam();
+  }
+
+  function quickAdd() {
+    var input = document.getElementById('quick-texto');
+    var texto = input.value.trim();
+    if (!texto) return;
+    var ahora = new Date().toISOString();
+    data.tareas.unshift({ id:'qa-'+Date.now(), texto:texto, col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Carga rápida', imp:false, addedDate:ahora, createdAt:ahora });
+    saveData(data);
+    input.value = '';
+    renderBoard();
+    // flash feedback
+    input.style.borderColor = 'var(--done)';
+    setTimeout(function(){ input.style.borderColor = ''; }, 800);
+  }
+
+  function copiarLink() {
+    var url = window.location.href;
+    navigator.clipboard.writeText(url).then(function(){
+      var el = document.getElementById('link-copiado');
+      el.style.display = 'inline';
+      setTimeout(function(){ el.style.display = 'none'; }, 2000);
+    }).catch(function(){
+      prompt('Copiá este link:', url);
+    });
+  }
+
+  // Fix link-bar href to current URL
+  document.getElementById('link-online').href = window.location.href;
+
+  window.quickAdd = quickAdd;
+  window.copiarLink = copiarLink;
+  window.abrirModal = abrirModal;
+  window.abrirModalTeam = abrirModalTeam;
+  window.cerrarModal = cerrarModal;
+  window.guardarTarea = guardarTarea;
+  window.toggleDone = toggleDone;
+  window.toggleTeamDone = toggleTeamDone;
+  window.moverCol = moverCol;
+  window.cambiarTab = cambiarTab;
+  window.renderBoard = renderBoard;
+
+  var dragId = null;
+  function onDragStart(e) { dragId = e.currentTarget.dataset.id; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+  function setupColDrop() {
+    document.querySelectorAll('.col').forEach(function(col){
+      col.addEventListener('dragover', function(e){ e.preventDefault(); col.classList.add('drag-over'); });
+      col.addEventListener('dragleave', function(){ col.classList.remove('drag-over'); });
+      col.addEventListener('drop', function(e){
+        e.preventDefault(); col.classList.remove('drag-over');
+        var colId = col.querySelector('.col-cards').id.replace('cards-','');
+        if (dragId && colId) { moverCol(dragId, colId); dragId = null; }
+      });
+    });
+  }
+
+  async function cargarGmail() {
+    var btn = document.getElementById('btn-gmail');
+    btn.textContent = '⏳ Cargando…'; btn.disabled = true;
+    try {
+      var result = await window.cowork.callMcpTool('mcp__edd0bb6e-8680-4493-8ada-4c142d2a6419__search_threads', { query:'is:starred', pageSize:30 });
+      var threads = (result && result.threads) || [];
+      var ahora = new Date().toISOString();
+      var idsExistentes = new Set(data.tareas.map(function(t){ return t.gmailThreadId; }).filter(Boolean));
+      var nuevas = 0;
+      threads.forEach(function(thread){
+        if (idsExistentes.has(thread.id)) return;
+        var msg = thread.messages && thread.messages[0];
+        if (!msg) return;
+        var asunto = msg.subject || '(Sin asunto)';
+        var remitente = msg.sender ? msg.sender.replace(/<.*>/,'').trim() : 'Desconocido';
+        var proyecto = 'coordi';
+        var txt = (asunto + ' ' + remitente).toLowerCase();
+        if (txt.indexOf('liga')>=0||txt.indexOf('javier')>=0) proyecto='liga';
+        else if (txt.indexOf('bda')>=0) proyecto='bda';
+        else if (txt.indexOf('amia')>=0||txt.indexOf('cuidamia')>=0) proyecto='amia';
+        else if (txt.indexOf('empower')>=0||txt.indexOf('power')>=0) proyecto='power';
+        else if (txt.indexOf('zlo')>=0) proyecto='zlo';
+        else if (txt.indexOf('click')>=0) proyecto='elclick';
+        else if (txt.indexOf('santander')>=0) proyecto='santander';
+        data.tareas.push({ id:'gmail-'+thread.id, gmailThreadId:thread.id, texto:asunto+' — '+remitente, col:'hoy', proyecto:proyecto, resp:'vicky', fecha:'', origen:'Gmail ⭐ '+(msg.date?new Date(msg.date).toLocaleDateString('es-AR'):''), imp:false, addedDate:ahora, createdAt:ahora });
+        nuevas++;
+      });
+      if (nuevas > 0) { saveData(data); renderBoard(); btn.textContent = '✅ '+nuevas+' tareas de Gmail ⭐'; }
+      else { btn.textContent = '✅ Sin nuevos destacados'; }
+    } catch(e) { btn.textContent = '❌ Error al cargar Gmail'; console.error(e); }
+    setTimeout(function(){ btn.textContent = '⭐ Cargar Gmail destacados'; btn.disabled = false; }, 3000);
+  }
+  window.cargarGmail = cargarGmail;
+
+  renderBoard();
+  setTimeout(setupColDrop, 100);
+})();
+</script>
+</body>
+</html>
