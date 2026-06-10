@@ -41,13 +41,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .col-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .col-title{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .col-title .dot{width:8px;height:8px;border-radius:50%;}
-.dot-todo{background:#f43f5e;}
 .dot-hoy{background:var(--hoy);}
-.chip-todo{background:#ffe4e6;color:#be123c;}
 .dot-seg{background:var(--seg);}
 .dot-men{background:var(--men);}
 .dot-done{background:var(--done);}
 .col-count{font-size:11px;font-weight:700;background:var(--bg);color:var(--muted);padding:1px 7px;border-radius:99px;}
+.dot-todo{background:#f43f5e;}
 .col.drag-over{background:#eff6ff;border-color:var(--hoy);border-width:2px;}
 .card.touch-dragging{opacity:0.25;}
 .col-hint{font-size:10px;color:var(--muted);padding:4px 12px 6px;flex-shrink:0;}
@@ -69,6 +68,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .card-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
 .chip{font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;text-transform:uppercase;letter-spacing:0.03em;}
 .chip-coordi{background:#fce7f3;color:#be185d;}
+.chip-todo{background:#ffe4e6;color:#be123c;}
 .chip-liga{background:#fef3c7;color:#92400e;}
 .chip-zlo,.chip-zl{background:#e0f2fe;color:#0369a1;}
 .chip-amia{background:#ede9fe;color:#6d28d9;}
@@ -147,7 +147,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="btn-wsp" onclick="cargarGmail()" id="btn-gmail">&#11088; Cargar Gmail destacados</button>
   </div>
 </div>
-
 
 <div class="tabs">
   <div class="tab activo" data-tab="kanban" onclick="cambiarTab(this)">&#127800; Mi Kanban</div>
@@ -247,21 +246,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-wsp" onclick="if(event.target===this)document.getElementById('modal-wsp').classList.remove('visible')">
-  <div class="modal wsp-modal">
-    <h3>&#128241; Agregar tareas por WhatsApp</h3>
-    <p style="font-size:11px;color:var(--muted);margin-bottom:12px;">Hay tres opciones seg&#250;n lo que m&#225;s te sirva.</p>
-    <div class="wsp-option">
-      <span class="wsp-tag">F&#193;CIL</span>
-      <h4>&#128206; Mand&#225; el mensaje al chat de Cowork</h4>
-      <p>Desde WhatsApp, reenviar cualquier mensaje al chat de Claude Cowork. Claude lo procesa y agrega la tarea al tablero.</p>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-primary" onclick="document.getElementById('modal-wsp').classList.remove('visible')">Entendido</button>
-    </div>
-  </div>
-</div>
-
 <script>
 (function() {
   var STORE_KEY = 'forit-kanban-v1';
@@ -319,6 +303,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     saveTeam(teamData);
   }
 
+  function autoPromote() {
+    var changed = false;
+    data.tareas.forEach(function(t) {
+      if (t.recurrente === 'semanal' && (t.col === 'terminadas' || t.done)) {
+        var lastDone = new Date(t.completedAt || t.lastMovedToHoy || t.createdAt);
+        lastDone.setHours(0,0,0,0);
+        var diffDays = Math.round((HOY - lastDone) / (1000*60*60*24));
+        if (diffDays >= 7) { t.col='hoy'; t.done=false; t.lastMovedToHoy=new Date().toISOString(); delete t.completedAt; t.promoBadge='🔁 Semanal'; changed=true; }
+        return;
+      }
+      if (t.col === 'seguimiento') {
+        var ciclo = t.recurrente === 'semanal' ? 7 : 5;
+        var added = new Date(t.lastMovedToHoy || t.addedDate || t.createdAt);
+        added.setHours(0,0,0,0);
+        var diffDays2 = Math.round((HOY - added) / (1000*60*60*24));
+        if (diffDays2 >= ciclo) { t.col='hoy'; t.lastMovedToHoy=new Date().toISOString(); t.promoBadge=t.recurrente==='semanal'?'🔁 Semanal':('📌 Promovida ('+diffDays2+'d)'); changed=true; }
+      }
+      if (t.col === 'mensual') {
+        var lastMove = t.lastMovedToHoy ? new Date(t.lastMovedToHoy) : new Date(t.addedDate || t.createdAt);
+        lastMove.setHours(0,0,0,0);
+        var diffDays3 = Math.round((HOY - lastMove) / (1000*60*60*24));
+        if (diffDays3 >= 30) { t.col='hoy'; t.lastMovedToHoy=new Date().toISOString(); t.promoBadge='📌 Mensual ('+diffDays3+'d)'; changed=true; }
+      }
+    });
+    if (changed) saveData(data);
+  }
+
   (function importarNuevas() {
     var ahora = new Date().toISOString();
     var nuevas = [
@@ -348,40 +359,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
   (function importarDailyTL08062026() {
     var ahora = new Date().toISOString();
-    // Tareas de Vicky surgidas del Daily TL 2026-06-08 09:36
     var nuevasVicky = [
-      { id:'d0806v1', texto:'Crear grupo de comunicación con Alex Lucero para gestionar las credenciales productivas del proyecto BDA (necesarias para que Alex avance con la app)', col:'hoy', proyecto:'bda', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
-      { id:'d0806v2', texto:'Insistir a Alfred para que libere las funcionalidades de las páginas restantes del diseño Power — Agus pide específicamente desbloquear secciones "Nosotros" y "Enfoque" en HTML incluso sin aprobación final del cliente, para que el equipo pueda avanzar', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
-      { id:'d0806v3', texto:'Seguimiento autoevaluaciones de desempeño — Bruno recordó que Lucio, Agus y Seba tienen autoevaluaciones pendientes en la plataforma; chequear con Vic F estado de las evaluaciones del resto del equipo', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
-      { id:'d0806v4', texto:'Mayira deja el proyecto: consiguió empleo formal — definir redistribución de tareas con Bruno y comunicarlo al equipo', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
-      { id:'d0806v5', texto:'Coordinar con Lucio creación de entorno de pruebas ZLO para gestionar modificaciones y bugs tras la última demo — Lucio enviará los detalles por Discord', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
-      { id:'d0806v6', texto:'Hacer feedback a Martina sobre rol protagónico en reuniones con cliente Liga — alineado con devolución de Bruno tras la última demo con Javier', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v1', texto:'Crear grupo de comunicación con Alex Lucero para gestionar las credenciales productivas del proyecto BDA', col:'hoy', proyecto:'bda', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v2', texto:'Insistir a Alfred para que libere las funcionalidades de las páginas restantes del diseño Power', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v3', texto:'Seguimiento autoevaluaciones de desempeño — chequear con Vic F estado de las evaluaciones del equipo', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v4', texto:'Mayira deja el proyecto: consiguió empleo formal — definir redistribución de tareas con Bruno', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v5', texto:'Coordinar con Lucio creación de entorno de pruebas ZLO', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v6', texto:'Hacer feedback a Martina sobre rol protagónico en reuniones con cliente Liga', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
     ];
     var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
     var agV = 0;
     nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
     if (agV > 0) saveData(data);
 
-    // Tareas del Equipo TL surgidas del Daily TL 2026-06-08 09:36
     var nuevasTeam = [
-      { id:'d0806t1', texto:'Ordenar componentes de la tabla de tareas del proyecto Accomodation/Reconocimiento y asignar tarea específica a cada integrante del equipo, manteniendo el flujo de revisión de pares (code reviews) para asegurar control de cambios', resp:'alex', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t2', texto:'Coordinar reunión con Victoria Fornieles para evaluar cambios de Reconocimiento y rendimiento — generar tareas adicionales según corresponda', resp:'alex', proyecto:'power', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t3', texto:'Solicitar al equipo la lista de pruebas unitarias completadas y las pendientes — dividir el trabajo para asignar 1 o 2 pruebas por persona (prioridad según pidió Bruno)', resp:'alex', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t4', texto:'Capacitar al coordinador general sobre las directivas del proyecto Reconocimiento, asegurando que pueda apoyar al equipo y mantener los estándares cuando Alex no esté presente', resp:'alex', proyecto:'power', fecha:'2026-06-12', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t5', texto:'Insistir al equipo ZL Store para que envíen el feedback pendiente sobre el desempeño de Bruno Mentasti', resp:'lucio', proyecto:'coordi', fecha:'2026-06-09', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t6', texto:'Enviar por Discord las especificaciones de las tareas adicionales de testeo tras la demo ZLO (incluye crear entorno de pruebas con apoyo de Vicky)', resp:'lucio', proyecto:'zlo', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t7', texto:'Solicitar a Agustín Kassargian o Alex Lucero las variables de entorno productivas necesarias para realizar el despliegue a producción de Reconocimiento', resp:'seba', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t8', texto:'Borrar la base de datos actual del ambiente de Reconocimiento antes de ejecutar la migración — cuidando no perder las evaluaciones previas almacenadas (despliegue local ya configurado, espera confirmación de estabilidad)', resp:'seba', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t9', texto:'Asumir rol protagónico y activo durante las reuniones con cliente Liga — expresar opiniones propias, apoyar al equipo y mantener flujo comunicativo constante (devolución de Bruno tras última demo con Javier)', resp:'martina', proyecto:'liga', fecha:'2026-06-12', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t10', texto:'Completar autoevaluación de desempeño TL pendiente en la plataforma (recordatorio Bruno 08/06)', resp:'seba', proyecto:'coordi', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t11', texto:'Continuar revisión de documentación en Drive y pruebas manuales en producción de AMIA/Cuidamia — documentar diferencias con texto e imágenes para su posterior unificación. Recordatorio: migración cargó 100k postulantes (de 1.3M) en RDS; falta migrar empresas, postulaciones y matches (no estaban en origen)', resp:'nahuel', proyecto:'amia', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t12', texto:'Avanzar con ajustes de frontend y navbar de Power apenas Alfred libere los diseños — implementar primero en Storybook para asegurar consistencia (app ya desplegada, link compartido en canal)', resp:'agus', proyecto:'power', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t1', texto:'Ordenar componentes tabla de tareas Reconocimiento y asignar tarea específica a cada integrante', resp:'alex', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t2', texto:'Coordinar reunión con Victoria Fornieles para evaluar cambios de Reconocimiento', resp:'alex', proyecto:'power', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t3', texto:'Solicitar lista de pruebas unitarias y dividir trabajo por persona', resp:'alex', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t4', texto:'Capacitar coordinador general sobre directivas del proyecto Reconocimiento', resp:'alex', proyecto:'power', fecha:'2026-06-12', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t5', texto:'Insistir al equipo ZL Store para que envíen el feedback pendiente sobre Bruno Mentasti', resp:'lucio', proyecto:'coordi', fecha:'2026-06-09', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t6', texto:'Enviar por Discord especificaciones de tareas adicionales de testeo tras demo ZLO', resp:'lucio', proyecto:'zlo', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t7', texto:'Solicitar variables de entorno productivas para despliegue a producción de Reconocimiento', resp:'seba', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t8', texto:'Borrar base de datos actual del ambiente de Reconocimiento antes de ejecutar la migración', resp:'seba', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t9', texto:'Asumir rol protagónico en reuniones con cliente Liga — expresar opiniones y mantener flujo comunicativo', resp:'martina', proyecto:'liga', fecha:'2026-06-12', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t10', texto:'Completar autoevaluación de desempeño TL pendiente', resp:'seba', proyecto:'coordi', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t11', texto:'Continuar revisión de documentación y pruebas manuales en producción AMIA/Cuidamia', resp:'nahuel', proyecto:'amia', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t12', texto:'Avanzar con ajustes de frontend y navbar de Power apenas Alfred libere los diseños', resp:'agus', proyecto:'power', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
     ];
     var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
     var agT = 0;
     nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
     if (agT > 0) saveTeam(teamData);
   })();
+
 
   (function importarAgenda09062026() {
     var ahora = new Date().toISOString();
@@ -392,10 +402,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       { id:'ag0906v4', texto:'Seguimiento reunión con Victoria Lacroze / Juan Vieyra (11:15hs) — documentar acuerdos y definir si hay propuesta a presentar', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-09', origen:'Agenda 09/06 — nueva reunión', imp:true, addedDate:ahora, createdAt:ahora },
       { id:'ag0906v5', texto:'ZL Daily con VL (16:30hs) — preparar temas a tratar con Lucio sobre ZLO: entorno de pruebas y estado del sprint', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-09', origen:'Agenda 09/06', imp:false, addedDate:ahora, createdAt:ahora },
     ];
-    var idsExistentes = new Set(data.tareas.map(function(t){ return t.id; }));
-    var agregadas = 0;
-    nuevas.forEach(function(t) { if (!idsExistentes.has(t.id)) { data.tareas.push(t); agregadas++; } });
-    if (agregadas > 0) saveData(data);
+    var ids = new Set(data.tareas.map(function(t){ return t.id; }));
+    nuevas.forEach(function(t){ if(!ids.has(t.id)){ data.tareas.push(t); } });
+    saveData(data);
   })();
 
   autoPromote();
@@ -436,10 +445,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       { id:'mensual', label:'MENSUAL', icon:'📅', dot:'dot-men', hint:'Aparece en HOY una vez por mes.' },
       { id:'terminadas', label:'TERMINADAS', icon:'✅', dot:'dot-done', hint:terminadas.length + ' tareas completadas.' },
     ];
-    // Guardar scroll de cada columna antes de redibujar
     var scrollPos = {};
     document.querySelectorAll('.col-cards').forEach(function(el){ scrollPos[el.id] = el.scrollTop; });
-
     var board = document.getElementById('board');
     board.innerHTML = '';
     cols.forEach(function(col) {
@@ -475,9 +482,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         cardsEl.appendChild(card);
       });
     });
-    // Restaurar scroll después de redibujar
     Object.keys(scrollPos).forEach(function(id){ var el=document.getElementById(id); if(el) el.scrollTop=scrollPos[id]; });
-
     renderStats();
   }
 
@@ -615,20 +620,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     saveData(data);
     input.value = '';
     renderBoard();
-    // flash feedback
     input.style.borderColor = 'var(--done)';
     setTimeout(function(){ input.style.borderColor = ''; }, 800);
-  }
-
-  function copiarLink() {
-    var url = window.location.href;
-    navigator.clipboard.writeText(url).then(function(){
-      var el = document.getElementById('link-copiado');
-      el.style.display = 'inline';
-      setTimeout(function(){ el.style.display = 'none'; }, 2000);
-    }).catch(function(){
-      prompt('Copiá este link:', url);
-    });
   }
 
   window.quickAdd = quickAdd;
@@ -642,13 +635,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   window.cambiarTab = cambiarTab;
   window.renderBoard = renderBoard;
 
-  // ── DRAG & DROP (desktop) ──────────────────────────────
+  // ── DRAG (desktop) ───────────────────────────────────
   var dragId = null;
   function onDragStart(e) { dragId = e.currentTarget.dataset.id; e.dataTransfer.effectAllowed = 'move'; }
   function setupColDrop() {
     document.querySelectorAll('.col').forEach(function(col){
       col.addEventListener('dragover', function(e){ e.preventDefault(); col.classList.add('drag-over'); });
-      col.addEventListener('dragleave', function(e){ if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over'); });
+      col.addEventListener('dragleave', function(e){ if(!col.contains(e.relatedTarget)) col.classList.remove('drag-over'); });
       col.addEventListener('drop', function(e){
         e.preventDefault(); col.classList.remove('drag-over');
         var colId = col.querySelector('.col-cards').id.replace('cards-','');
@@ -656,73 +649,53 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       });
     });
   }
-
-  // ── TOUCH DRAG (mobile) ────────────────────────────────
-  var touchDragId = null, touchClone = null, touchTimer = null;
-  var touchOriginCard = null;
-
+  // ── TOUCH DRAG (mobile) ──────────────────────────────
+  var touchDragId=null, touchClone=null, touchTimer=null, touchOriginCard=null;
   function setupTouchDrag(card) {
     var startX, startY, didMove;
-    card.addEventListener('touchstart', function(e) {
-      startX = e.touches[0].clientX; startY = e.touches[0].clientY; didMove = false;
-      touchTimer = setTimeout(function() {
-        if (didMove) return;
-        touchInitDrag(card, e.touches[0]);
-      }, 350);
-    }, { passive: true });
-    card.addEventListener('touchmove', function(e) {
-      var dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
-      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) didMove = true;
-      if (!touchDragId) return;
+    card.addEventListener('touchstart', function(e){
+      startX=e.touches[0].clientX; startY=e.touches[0].clientY; didMove=false;
+      touchTimer=setTimeout(function(){ if(!didMove) touchInitDrag(card,e.touches[0]); }, 350);
+    },{passive:true});
+    card.addEventListener('touchmove', function(e){
+      var dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY;
+      if(Math.abs(dx)>6||Math.abs(dy)>6) didMove=true;
+      if(!touchDragId) return;
       e.preventDefault();
       touchMoveDrag(e.touches[0]);
-    }, { passive: false });
-    card.addEventListener('touchend', function(e) {
-      clearTimeout(touchTimer);
-      if (touchDragId) touchEndDrag(e.changedTouches[0]);
-    });
-    card.addEventListener('touchcancel', function() {
-      clearTimeout(touchTimer); touchCleanup();
-    });
+    },{passive:false});
+    card.addEventListener('touchend', function(e){ clearTimeout(touchTimer); if(touchDragId) touchEndDrag(e.changedTouches[0]); });
+    card.addEventListener('touchcancel', function(){ clearTimeout(touchTimer); touchCleanup(); });
   }
-
-  function touchInitDrag(card, touch) {
-    touchDragId = card.dataset.id;
-    touchOriginCard = card;
-    var r = card.getBoundingClientRect();
-    touchClone = card.cloneNode(true);
-    touchClone.style.cssText = 'position:fixed;z-index:9999;width:'+r.width+'px;left:'+r.left+'px;top:'+r.top+'px;opacity:0.88;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,0.22);border-radius:8px;transform:scale(1.04);transition:transform .1s;';
+  function touchInitDrag(card,touch){
+    touchDragId=card.dataset.id; touchOriginCard=card;
+    var r=card.getBoundingClientRect();
+    touchClone=card.cloneNode(true);
+    touchClone.style.cssText='position:fixed;z-index:9999;width:'+r.width+'px;left:'+r.left+'px;top:'+r.top+'px;opacity:0.88;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,0.22);border-radius:8px;transform:scale(1.04);';
     document.body.appendChild(touchClone);
     card.classList.add('touch-dragging');
-    if (navigator.vibrate) navigator.vibrate(40);
+    if(navigator.vibrate) navigator.vibrate(40);
   }
-
-  function touchMoveDrag(touch) {
-    if (!touchClone) return;
-    var w = touchClone.offsetWidth;
-    touchClone.style.left = (touch.clientX - w/2) + 'px';
-    touchClone.style.top  = (touch.clientY - 40) + 'px';
+  function touchMoveDrag(touch){
+    if(!touchClone) return;
+    touchClone.style.left=(touch.clientX-touchClone.offsetWidth/2)+'px';
+    touchClone.style.top=(touch.clientY-40)+'px';
     document.querySelectorAll('.col').forEach(function(c){ c.classList.remove('drag-over'); });
-    var el = document.elementFromPoint(touch.clientX, touch.clientY);
-    var col = el && el.closest && el.closest('.col');
-    if (col) col.classList.add('drag-over');
+    var el=document.elementFromPoint(touch.clientX,touch.clientY);
+    var col=el&&el.closest&&el.closest('.col');
+    if(col) col.classList.add('drag-over');
   }
-
-  function touchEndDrag(touch) {
-    var el = document.elementFromPoint(touch.clientX, touch.clientY);
-    var col = el && el.closest && el.closest('.col');
-    if (col) {
-      var cards = col.querySelector('.col-cards');
-      if (cards) { var colId = cards.id.replace('cards-',''); if (colId && touchDragId) moverCol(touchDragId, colId); }
-    }
+  function touchEndDrag(touch){
+    var el=document.elementFromPoint(touch.clientX,touch.clientY);
+    var col=el&&el.closest&&el.closest('.col');
+    if(col){ var cc=col.querySelector('.col-cards'); if(cc){ var id=cc.id.replace('cards-',''); if(id&&touchDragId) moverCol(touchDragId,id); } }
     touchCleanup();
   }
-
-  function touchCleanup() {
-    if (touchClone) { touchClone.remove(); touchClone = null; }
-    if (touchOriginCard) { touchOriginCard.classList.remove('touch-dragging'); touchOriginCard = null; }
+  function touchCleanup(){
+    if(touchClone){ touchClone.remove(); touchClone=null; }
+    if(touchOriginCard){ touchOriginCard.classList.remove('touch-dragging'); touchOriginCard=null; }
     document.querySelectorAll('.col').forEach(function(c){ c.classList.remove('drag-over'); });
-    touchDragId = null;
+    touchDragId=null;
   }
 
   async function cargarGmail() {
