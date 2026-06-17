@@ -8,7 +8,7 @@
   ],
   "mcpServerNames": [
     "Gmail"
-  ]h
+  ]
 }
 </script>
 <html lang="es">
@@ -227,18 +227,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </select>
     </div>
     <div class="form-row">
-      <label>Fecha l&#237;mite (opcional)</label>
+      <label>Vencimiento (opcional)</label>
       <input type="date" id="f-fecha">
     </div>
     <div class="form-row">
       <label>Origen / contexto (opcional)</label>
       <input type="text" id="f-origen" placeholder="Ej: Reuni&#243;n con cliente 05/06">
-    </div>
-    <div class="form-row">
-      <label style="display:flex;gap:8px;align-items:center;cursor:pointer;">
-        <input type="checkbox" id="f-imp" style="width:16px;height:16px;accent-color:#dc2626;">
-        &#128308; Marcar como IMPORTANTE
-      </label>
     </div>
     <div class="modal-btns">
       <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
@@ -404,14 +398,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     var cambiaron = false;
     data.tareas.forEach(function(t) {
       if (t.done || t.col === 'hoy' || t.col === 'terminadas') return;
-      // TO DO → HOY: si la fecha de vencimiento llegó o pasó
-      if (t.col === 'todo' && t.fecha) {
+      // CUALQUIER COLUMNA → HOY: si la fecha de vencimiento llegó o pasó
+      if (t.fecha) {
         var venc = new Date(t.fecha); venc.setHours(0,0,0,0);
         if (venc <= ahora) {
+          var colOrigen = t.col;
           t.col = 'hoy';
           t.lastMovedToHoy = new Date().toISOString();
-          t.promoBadge = '⏰ Movida de TO DO';
+          t.promoBadge = '⏰ Venció (' + colOrigen + ')';
           cambiaron = true;
+          return;
         }
       }
       // SEGUIMIENTO → HOY: cada 5 días
@@ -575,7 +571,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     document.getElementById('f-texto').value = '';
     document.getElementById('f-fecha').value = '';
     document.getElementById('f-origen').value = '';
-    document.getElementById('f-imp').checked = false;
     document.getElementById('f-resp').value = 'vicky';
     document.getElementById('modal-title').textContent = 'Nueva tarea en ' + currentCol.toUpperCase();
     document.getElementById('modal-add').classList.add('visible');
@@ -587,7 +582,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     document.getElementById('f-texto').value = '';
     document.getElementById('f-fecha').value = '';
     document.getElementById('f-origen').value = '';
-    document.getElementById('f-imp').checked = false;
     document.getElementById('f-resp').value = resp || 'vicky';
     document.getElementById('modal-title').textContent = 'Nueva tarea del equipo';
     document.getElementById('modal-add').dataset.mode = 'team';
@@ -610,7 +604,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     document.getElementById('f-resp').value = t.resp || 'vicky';
     document.getElementById('f-fecha').value = t.fecha || '';
     document.getElementById('f-origen').value = t.origen || '';
-    document.getElementById('f-imp').checked = !!t.imp;
     document.getElementById('modal-title').textContent = '✏️ Editar tarea';
     var m = document.getElementById('modal-add');
     m.dataset.mode = 'edit';
@@ -636,7 +629,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         t.resp = document.getElementById('f-resp').value;
         t.fecha = document.getElementById('f-fecha').value;
         t.origen = document.getElementById('f-origen').value;
-        t.imp = document.getElementById('f-imp').checked;
+        t.imp = false;
         t.editedAt = ahora;
         saveData(data); renderBoard();
       }
@@ -644,10 +637,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       return;
     }
     if (isTeam) {
-      teamData.tareas.push({ id:'team-'+Date.now(), texto:texto, resp:document.getElementById('f-resp').value, proyecto:document.getElementById('f-proyecto').value, fecha:document.getElementById('f-fecha').value, origen:document.getElementById('f-origen').value, imp:document.getElementById('f-imp').checked, done:false, createdAt:ahora });
+      teamData.tareas.push({ id:'team-'+Date.now(), texto:texto, resp:document.getElementById('f-resp').value, proyecto:document.getElementById('f-proyecto').value, fecha:document.getElementById('f-fecha').value, origen:document.getElementById('f-origen').value, imp:false, done:false, createdAt:ahora });
       saveTeam(teamData); renderTeam();
     } else {
-      data.tareas.push({ id:'k-'+Date.now(), texto:texto, col:document.getElementById('f-col').value, proyecto:document.getElementById('f-proyecto').value, resp:document.getElementById('f-resp').value, fecha:document.getElementById('f-fecha').value, origen:document.getElementById('f-origen').value, imp:document.getElementById('f-imp').checked, done:false, addedDate:ahora, createdAt:ahora });
+      data.tareas.push({ id:'k-'+Date.now(), texto:texto, col:document.getElementById('f-col').value, proyecto:document.getElementById('f-proyecto').value, resp:document.getElementById('f-resp').value, fecha:document.getElementById('f-fecha').value, origen:document.getElementById('f-origen').value, imp:false, done:false, addedDate:ahora, createdAt:ahora });
       saveData(data); renderBoard();
     }
     cerrarModal();
@@ -841,6 +834,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   window.editarTarea = editarTarea;
   window.cargarGmail = cargarGmail;
 
+  // Auto-sync Gmail destacados al abrir el tablero (solo en Cowork)
+  if (window.cowork) { setTimeout(cargarGmail, 1500); }
+
 
   (function importarDailyTL12062026() {
     var ahora = new Date().toISOString();
@@ -977,3 +973,4 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </script>
 </body>
 </html>
+                                                                                                                                                                                                                          
