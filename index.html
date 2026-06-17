@@ -41,12 +41,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .col-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .col-title{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .col-title .dot{width:8px;height:8px;border-radius:50%;}
+.dot-todo{background:#f43f5e;}
 .dot-hoy{background:var(--hoy);}
+.chip-todo{background:#ffe4e6;color:#be123c;}
 .dot-seg{background:var(--seg);}
 .dot-men{background:var(--men);}
 .dot-done{background:var(--done);}
 .col-count{font-size:11px;font-weight:700;background:var(--bg);color:var(--muted);padding:1px 7px;border-radius:99px;}
-.dot-todo{background:#f43f5e;}
 .col.drag-over{background:#eff6ff;border-color:var(--hoy);border-width:2px;}
 .card.touch-dragging{opacity:0.25;}
 .col-hint{font-size:10px;color:var(--muted);padding:4px 12px 6px;flex-shrink:0;}
@@ -68,7 +69,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .card-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
 .chip{font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;text-transform:uppercase;letter-spacing:0.03em;}
 .chip-coordi{background:#fce7f3;color:#be185d;}
-.chip-todo{background:#ffe4e6;color:#be123c;}
 .chip-liga{background:#fef3c7;color:#92400e;}
 .chip-zlo,.chip-zl{background:#e0f2fe;color:#0369a1;}
 .chip-amia{background:#ede9fe;color:#6d28d9;}
@@ -147,6 +147,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="btn-wsp" onclick="cargarGmail()" id="btn-gmail">&#11088; Cargar Gmail destacados</button>
   </div>
 </div>
+
 
 <div class="tabs">
   <div class="tab activo" data-tab="kanban" onclick="cambiarTab(this)">&#127800; Mi Kanban</div>
@@ -246,6 +247,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-wsp" onclick="if(event.target===this)document.getElementById('modal-wsp').classList.remove('visible')">
+  <div class="modal wsp-modal">
+    <h3>&#128241; Agregar tareas por WhatsApp</h3>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:12px;">Hay tres opciones seg&#250;n lo que m&#225;s te sirva.</p>
+    <div class="wsp-option">
+      <span class="wsp-tag">F&#193;CIL</span>
+      <h4>&#128206; Mand&#225; el mensaje al chat de Cowork</h4>
+      <p>Desde WhatsApp, reenviar cualquier mensaje al chat de Claude Cowork. Claude lo procesa y agrega la tarea al tablero.</p>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="document.getElementById('modal-wsp').classList.remove('visible')">Entendido</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   var STORE_KEY = 'forit-kanban-v1';
@@ -303,33 +319,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     saveTeam(teamData);
   }
 
-  function autoPromote() {
-    var changed = false;
-    data.tareas.forEach(function(t) {
-      if (t.recurrente === 'semanal' && (t.col === 'terminadas' || t.done)) {
-        var lastDone = new Date(t.completedAt || t.lastMovedToHoy || t.createdAt);
-        lastDone.setHours(0,0,0,0);
-        var diffDays = Math.round((HOY - lastDone) / (1000*60*60*24));
-        if (diffDays >= 7) { t.col='hoy'; t.done=false; t.lastMovedToHoy=new Date().toISOString(); delete t.completedAt; t.promoBadge='🔁 Semanal'; changed=true; }
-        return;
-      }
-      if (t.col === 'seguimiento') {
-        var ciclo = t.recurrente === 'semanal' ? 7 : 5;
-        var added = new Date(t.lastMovedToHoy || t.addedDate || t.createdAt);
-        added.setHours(0,0,0,0);
-        var diffDays2 = Math.round((HOY - added) / (1000*60*60*24));
-        if (diffDays2 >= ciclo) { t.col='hoy'; t.lastMovedToHoy=new Date().toISOString(); t.promoBadge=t.recurrente==='semanal'?'🔁 Semanal':('📌 Promovida ('+diffDays2+'d)'); changed=true; }
-      }
-      if (t.col === 'mensual') {
-        var lastMove = t.lastMovedToHoy ? new Date(t.lastMovedToHoy) : new Date(t.addedDate || t.createdAt);
-        lastMove.setHours(0,0,0,0);
-        var diffDays3 = Math.round((HOY - lastMove) / (1000*60*60*24));
-        if (diffDays3 >= 30) { t.col='hoy'; t.lastMovedToHoy=new Date().toISOString(); t.promoBadge='📌 Mensual ('+diffDays3+'d)'; changed=true; }
-      }
-    });
-    if (changed) saveData(data);
-  }
-
   (function importarNuevas() {
     var ahora = new Date().toISOString();
     var nuevas = [
@@ -359,39 +348,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
   (function importarDailyTL08062026() {
     var ahora = new Date().toISOString();
+    // Tareas de Vicky surgidas del Daily TL 2026-06-08 09:36
     var nuevasVicky = [
-      { id:'d0806v1', texto:'Crear grupo de comunicación con Alex Lucero para gestionar las credenciales productivas del proyecto BDA', col:'hoy', proyecto:'bda', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
-      { id:'d0806v2', texto:'Insistir a Alfred para que libere las funcionalidades de las páginas restantes del diseño Power', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
-      { id:'d0806v3', texto:'Seguimiento autoevaluaciones de desempeño — chequear con Vic F estado de las evaluaciones del equipo', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
-      { id:'d0806v4', texto:'Mayira deja el proyecto: consiguió empleo formal — definir redistribución de tareas con Bruno', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
-      { id:'d0806v5', texto:'Coordinar con Lucio creación de entorno de pruebas ZLO', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
-      { id:'d0806v6', texto:'Hacer feedback a Martina sobre rol protagónico en reuniones con cliente Liga', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v1', texto:'Crear grupo de comunicación con Alex Lucero para gestionar las credenciales productivas del proyecto BDA (necesarias para que Alex avance con la app)', col:'hoy', proyecto:'bda', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v2', texto:'Insistir a Alfred para que libere las funcionalidades de las páginas restantes del diseño Power — Agus pide específicamente desbloquear secciones "Nosotros" y "Enfoque" en HTML incluso sin aprobación final del cliente, para que el equipo pueda avanzar', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v3', texto:'Seguimiento autoevaluaciones de desempeño — Bruno recordó que Lucio, Agus y Seba tienen autoevaluaciones pendientes en la plataforma; chequear con Vic F estado de las evaluaciones del resto del equipo', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v4', texto:'Mayira deja el proyecto: consiguió empleo formal — definir redistribución de tareas con Bruno y comunicarlo al equipo', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-08', origen:'Daily TL 08/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v5', texto:'Coordinar con Lucio creación de entorno de pruebas ZLO para gestionar modificaciones y bugs tras la última demo — Lucio enviará los detalles por Discord', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'d0806v6', texto:'Hacer feedback a Martina sobre rol protagónico en reuniones con cliente Liga — alineado con devolución de Bruno tras la última demo con Javier', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'2026-06-09', origen:'Daily TL 08/06', imp:false, addedDate:ahora, createdAt:ahora },
     ];
     var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
     var agV = 0;
     nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
     if (agV > 0) saveData(data);
 
+    // Tareas del Equipo TL surgidas del Daily TL 2026-06-08 09:36
     var nuevasTeam = [
-      { id:'d0806t1', texto:'Ordenar componentes tabla de tareas Reconocimiento y asignar tarea específica a cada integrante', resp:'alex', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t2', texto:'Coordinar reunión con Victoria Fornieles para evaluar cambios de Reconocimiento', resp:'alex', proyecto:'power', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t3', texto:'Solicitar lista de pruebas unitarias y dividir trabajo por persona', resp:'alex', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t4', texto:'Capacitar coordinador general sobre directivas del proyecto Reconocimiento', resp:'alex', proyecto:'power', fecha:'2026-06-12', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t5', texto:'Insistir al equipo ZL Store para que envíen el feedback pendiente sobre Bruno Mentasti', resp:'lucio', proyecto:'coordi', fecha:'2026-06-09', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t6', texto:'Enviar por Discord especificaciones de tareas adicionales de testeo tras demo ZLO', resp:'lucio', proyecto:'zlo', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t7', texto:'Solicitar variables de entorno productivas para despliegue a producción de Reconocimiento', resp:'seba', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t8', texto:'Borrar base de datos actual del ambiente de Reconocimiento antes de ejecutar la migración', resp:'seba', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t9', texto:'Asumir rol protagónico en reuniones con cliente Liga — expresar opiniones y mantener flujo comunicativo', resp:'martina', proyecto:'liga', fecha:'2026-06-12', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t10', texto:'Completar autoevaluación de desempeño TL pendiente', resp:'seba', proyecto:'coordi', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t11', texto:'Continuar revisión de documentación y pruebas manuales en producción AMIA/Cuidamia', resp:'nahuel', proyecto:'amia', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
-      { id:'d0806t12', texto:'Avanzar con ajustes de frontend y navbar de Power apenas Alfred libere los diseños', resp:'agus', proyecto:'power', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t1', texto:'Ordenar componentes de la tabla de tareas del proyecto Accomodation/Reconocimiento y asignar tarea específica a cada integrante del equipo, manteniendo el flujo de revisión de pares (code reviews) para asegurar control de cambios', resp:'alex', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t2', texto:'Coordinar reunión con Victoria Fornieles para evaluar cambios de Reconocimiento y rendimiento — generar tareas adicionales según corresponda', resp:'alex', proyecto:'power', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t3', texto:'Solicitar al equipo la lista de pruebas unitarias completadas y las pendientes — dividir el trabajo para asignar 1 o 2 pruebas por persona (prioridad según pidió Bruno)', resp:'alex', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t4', texto:'Capacitar al coordinador general sobre las directivas del proyecto Reconocimiento, asegurando que pueda apoyar al equipo y mantener los estándares cuando Alex no esté presente', resp:'alex', proyecto:'power', fecha:'2026-06-12', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t5', texto:'Insistir al equipo ZL Store para que envíen el feedback pendiente sobre el desempeño de Bruno Mentasti', resp:'lucio', proyecto:'coordi', fecha:'2026-06-09', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t6', texto:'Enviar por Discord las especificaciones de las tareas adicionales de testeo tras la demo ZLO (incluye crear entorno de pruebas con apoyo de Vicky)', resp:'lucio', proyecto:'zlo', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t7', texto:'Solicitar a Agustín Kassargian o Alex Lucero las variables de entorno productivas necesarias para realizar el despliegue a producción de Reconocimiento', resp:'seba', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t8', texto:'Borrar la base de datos actual del ambiente de Reconocimiento antes de ejecutar la migración — cuidando no perder las evaluaciones previas almacenadas (despliegue local ya configurado, espera confirmación de estabilidad)', resp:'seba', proyecto:'power', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t9', texto:'Asumir rol protagónico y activo durante las reuniones con cliente Liga — expresar opiniones propias, apoyar al equipo y mantener flujo comunicativo constante (devolución de Bruno tras última demo con Javier)', resp:'martina', proyecto:'liga', fecha:'2026-06-12', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t10', texto:'Completar autoevaluación de desempeño TL pendiente en la plataforma (recordatorio Bruno 08/06)', resp:'seba', proyecto:'coordi', fecha:'2026-06-09', imp:true, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t11', texto:'Continuar revisión de documentación en Drive y pruebas manuales en producción de AMIA/Cuidamia — documentar diferencias con texto e imágenes para su posterior unificación. Recordatorio: migración cargó 100k postulantes (de 1.3M) en RDS; falta migrar empresas, postulaciones y matches (no estaban en origen)', resp:'nahuel', proyecto:'amia', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
+      { id:'d0806t12', texto:'Avanzar con ajustes de frontend y navbar de Power apenas Alfred libere los diseños — implementar primero en Storybook para asegurar consistencia (app ya desplegada, link compartido en canal)', resp:'agus', proyecto:'power', fecha:'2026-06-10', imp:false, done:false, origen:'Daily TL 08/06', createdAt:ahora },
     ];
     var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
     var agT = 0;
     nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
     if (agT > 0) saveTeam(teamData);
   })();
-
 
   (function importarAgenda09062026() {
     var ahora = new Date().toISOString();
@@ -402,10 +392,53 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       { id:'ag0906v4', texto:'Seguimiento reunión con Victoria Lacroze / Juan Vieyra (11:15hs) — documentar acuerdos y definir si hay propuesta a presentar', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-09', origen:'Agenda 09/06 — nueva reunión', imp:true, addedDate:ahora, createdAt:ahora },
       { id:'ag0906v5', texto:'ZL Daily con VL (16:30hs) — preparar temas a tratar con Lucio sobre ZLO: entorno de pruebas y estado del sprint', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-09', origen:'Agenda 09/06', imp:false, addedDate:ahora, createdAt:ahora },
     ];
-    var ids = new Set(data.tareas.map(function(t){ return t.id; }));
-    nuevas.forEach(function(t){ if(!ids.has(t.id)){ data.tareas.push(t); } });
-    saveData(data);
+    var idsExistentes = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agregadas = 0;
+    nuevas.forEach(function(t) { if (!idsExistentes.has(t.id)) { data.tareas.push(t); agregadas++; } });
+    if (agregadas > 0) saveData(data);
   })();
+
+  function autoPromote() {
+    var ahora = new Date();
+    ahora.setHours(0,0,0,0);
+    var cambiaron = false;
+    data.tareas.forEach(function(t) {
+      if (t.done || t.col === 'hoy' || t.col === 'terminadas') return;
+      // TO DO → HOY: si la fecha de vencimiento llegó o pasó
+      if (t.col === 'todo' && t.fecha) {
+        var venc = new Date(t.fecha); venc.setHours(0,0,0,0);
+        if (venc <= ahora) {
+          t.col = 'hoy';
+          t.lastMovedToHoy = new Date().toISOString();
+          t.promoBadge = '⏰ Movida de TO DO';
+          cambiaron = true;
+        }
+      }
+      // SEGUIMIENTO → HOY: cada 5 días
+      if (t.col === 'seguimiento') {
+        var last = t.lastMovedToHoy ? new Date(t.lastMovedToHoy) : (t.addedDate ? new Date(t.addedDate) : new Date(t.createdAt));
+        last.setHours(0,0,0,0);
+        var diff = Math.round((ahora - last) / (1000*60*60*24));
+        if (diff >= 5) {
+          t.col = 'hoy'; t.lastMovedToHoy = new Date().toISOString();
+          t.promoBadge = '🔄 Seguimiento ' + diff + 'd';
+          cambiaron = true;
+        }
+      }
+      // MENSUAL → HOY: cada 30 días
+      if (t.col === 'mensual') {
+        var last2 = t.lastMovedToHoy ? new Date(t.lastMovedToHoy) : (t.addedDate ? new Date(t.addedDate) : new Date(t.createdAt));
+        last2.setHours(0,0,0,0);
+        var diff2 = Math.round((ahora - last2) / (1000*60*60*24));
+        if (diff2 >= 30) {
+          t.col = 'hoy'; t.lastMovedToHoy = new Date().toISOString();
+          t.promoBadge = '📅 Mensual ' + diff2 + 'd';
+          cambiaron = true;
+        }
+      }
+    });
+    if (cambiaron) saveData(data);
+  }
 
   autoPromote();
 
@@ -445,8 +478,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       { id:'mensual', label:'MENSUAL', icon:'📅', dot:'dot-men', hint:'Aparece en HOY una vez por mes.' },
       { id:'terminadas', label:'TERMINADAS', icon:'✅', dot:'dot-done', hint:terminadas.length + ' tareas completadas.' },
     ];
+    // Guardar scroll de cada columna antes de redibujar
     var scrollPos = {};
     document.querySelectorAll('.col-cards').forEach(function(el){ scrollPos[el.id] = el.scrollTop; });
+
     var board = document.getElementById('board');
     board.innerHTML = '';
     cols.forEach(function(col) {
@@ -477,12 +512,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         if (t.col !== 'seguimiento' && t.col !== 'terminadas') moveBtns += '<button class="card-btn" onclick="moverCol(\'' + t.id + '\',\'seguimiento\')">🔄</button>';
         if (t.col !== 'mensual' && t.col !== 'terminadas') moveBtns += '<button class="card-btn" onclick="moverCol(\'' + t.id + '\',\'mensual\')">📅</button>';
         if (t.col === 'terminadas') moveBtns += '<button class="card-btn" onclick="moverCol(\'' + t.id + '\',\'hoy\')">↩</button>';
+        moveBtns += '<button class="card-btn" onclick="editarTarea(\'' + t.id + '\')">✏️</button>';
         moveBtns += '<button class="card-btn" onclick="toggleDone(\'' + t.id + '\',true)">✅</button>';
         card.innerHTML = '<div class="card-top"><div class="card-check"><input type="checkbox" ' + (t.done?'checked':'') + ' onchange="toggleDone(\'' + t.id + '\',this.checked)"></div><div class="card-body"><div class="card-title">' + t.texto + '</div><div class="card-chips">' + chips + '</div></div></div><div class="card-actions">' + moveBtns + '</div><div class="card-footer"><div class="card-meta">' + (fd.text?'<span class="card-date ' + fd.cls + '">' + fd.text + '</span>':'') + (t.resp && t.resp!=='vicky'?'<span class="card-resp">' + (RESP_EMOJI[t.resp]||'') + ' ' + t.resp + '</span>':'') + '</div><div style="font-size:9px;color:var(--muted);font-style:italic;text-align:right;">' + (t.origen||'') + '</div></div>';
         cardsEl.appendChild(card);
       });
     });
+    // Restaurar scroll después de redibujar
     Object.keys(scrollPos).forEach(function(id){ var el=document.getElementById(id); if(el) el.scrollTop=scrollPos[id]; });
+
     renderStats();
   }
 
@@ -560,13 +598,51 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   function cerrarModal() {
     document.getElementById('modal-add').classList.remove('visible');
     document.getElementById('modal-add').dataset.mode = '';
+    delete document.getElementById('modal-add').dataset.editId;
+  }
+
+  function editarTarea(id) {
+    var t = data.tareas.find(function(x){ return x.id === id; });
+    if (!t) return;
+    document.getElementById('f-texto').value = t.texto || '';
+    document.getElementById('f-col').value = t.col || 'hoy';
+    document.getElementById('f-proyecto').value = t.proyecto || 'coordi';
+    document.getElementById('f-resp').value = t.resp || 'vicky';
+    document.getElementById('f-fecha').value = t.fecha || '';
+    document.getElementById('f-origen').value = t.origen || '';
+    document.getElementById('f-imp').checked = !!t.imp;
+    document.getElementById('modal-title').textContent = '✏️ Editar tarea';
+    var m = document.getElementById('modal-add');
+    m.dataset.mode = 'edit';
+    m.dataset.editId = id;
+    m.classList.add('visible');
+    setTimeout(function(){ document.getElementById('f-texto').focus(); }, 100);
   }
 
   function guardarTarea() {
     var texto = document.getElementById('f-texto').value.trim();
     if (!texto) { alert('Escribí qué hay que hacer'); return; }
-    var isTeam = document.getElementById('modal-add').dataset.mode === 'team';
+    var mode = document.getElementById('modal-add').dataset.mode;
+    var isTeam = mode === 'team';
+    var isEdit = mode === 'edit';
     var ahora = new Date().toISOString();
+    if (isEdit) {
+      var editId = document.getElementById('modal-add').dataset.editId;
+      var t = data.tareas.find(function(x){ return x.id === editId; });
+      if (t) {
+        t.texto = texto;
+        t.col = document.getElementById('f-col').value;
+        t.proyecto = document.getElementById('f-proyecto').value;
+        t.resp = document.getElementById('f-resp').value;
+        t.fecha = document.getElementById('f-fecha').value;
+        t.origen = document.getElementById('f-origen').value;
+        t.imp = document.getElementById('f-imp').checked;
+        t.editedAt = ahora;
+        saveData(data); renderBoard();
+      }
+      cerrarModal();
+      return;
+    }
     if (isTeam) {
       teamData.tareas.push({ id:'team-'+Date.now(), texto:texto, resp:document.getElementById('f-resp').value, proyecto:document.getElementById('f-proyecto').value, fecha:document.getElementById('f-fecha').value, origen:document.getElementById('f-origen').value, imp:document.getElementById('f-imp').checked, done:false, createdAt:ahora });
       saveTeam(teamData); renderTeam();
@@ -620,8 +696,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     saveData(data);
     input.value = '';
     renderBoard();
+    // flash feedback
     input.style.borderColor = 'var(--done)';
     setTimeout(function(){ input.style.borderColor = ''; }, 800);
+  }
+
+  function copiarLink() {
+    var url = window.location.href;
+    navigator.clipboard.writeText(url).then(function(){
+      var el = document.getElementById('link-copiado');
+      el.style.display = 'inline';
+      setTimeout(function(){ el.style.display = 'none'; }, 2000);
+    }).catch(function(){
+      prompt('Copiá este link:', url);
+    });
   }
 
   window.quickAdd = quickAdd;
@@ -635,13 +723,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   window.cambiarTab = cambiarTab;
   window.renderBoard = renderBoard;
 
-  // ── DRAG (desktop) ───────────────────────────────────
+  // ── DRAG & DROP (desktop) ──────────────────────────────
   var dragId = null;
   function onDragStart(e) { dragId = e.currentTarget.dataset.id; e.dataTransfer.effectAllowed = 'move'; }
   function setupColDrop() {
     document.querySelectorAll('.col').forEach(function(col){
       col.addEventListener('dragover', function(e){ e.preventDefault(); col.classList.add('drag-over'); });
-      col.addEventListener('dragleave', function(e){ if(!col.contains(e.relatedTarget)) col.classList.remove('drag-over'); });
+      col.addEventListener('dragleave', function(e){ if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over'); });
       col.addEventListener('drop', function(e){
         e.preventDefault(); col.classList.remove('drag-over');
         var colId = col.querySelector('.col-cards').id.replace('cards-','');
@@ -649,53 +737,73 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       });
     });
   }
-  // ── TOUCH DRAG (mobile) ──────────────────────────────
-  var touchDragId=null, touchClone=null, touchTimer=null, touchOriginCard=null;
+
+  // ── TOUCH DRAG (mobile) ────────────────────────────────
+  var touchDragId = null, touchClone = null, touchTimer = null;
+  var touchOriginCard = null;
+
   function setupTouchDrag(card) {
     var startX, startY, didMove;
-    card.addEventListener('touchstart', function(e){
-      startX=e.touches[0].clientX; startY=e.touches[0].clientY; didMove=false;
-      touchTimer=setTimeout(function(){ if(!didMove) touchInitDrag(card,e.touches[0]); }, 350);
-    },{passive:true});
-    card.addEventListener('touchmove', function(e){
-      var dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY;
-      if(Math.abs(dx)>6||Math.abs(dy)>6) didMove=true;
-      if(!touchDragId) return;
+    card.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY; didMove = false;
+      touchTimer = setTimeout(function() {
+        if (didMove) return;
+        touchInitDrag(card, e.touches[0]);
+      }, 350);
+    }, { passive: true });
+    card.addEventListener('touchmove', function(e) {
+      var dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) didMove = true;
+      if (!touchDragId) return;
       e.preventDefault();
       touchMoveDrag(e.touches[0]);
-    },{passive:false});
-    card.addEventListener('touchend', function(e){ clearTimeout(touchTimer); if(touchDragId) touchEndDrag(e.changedTouches[0]); });
-    card.addEventListener('touchcancel', function(){ clearTimeout(touchTimer); touchCleanup(); });
+    }, { passive: false });
+    card.addEventListener('touchend', function(e) {
+      clearTimeout(touchTimer);
+      if (touchDragId) touchEndDrag(e.changedTouches[0]);
+    });
+    card.addEventListener('touchcancel', function() {
+      clearTimeout(touchTimer); touchCleanup();
+    });
   }
-  function touchInitDrag(card,touch){
-    touchDragId=card.dataset.id; touchOriginCard=card;
-    var r=card.getBoundingClientRect();
-    touchClone=card.cloneNode(true);
-    touchClone.style.cssText='position:fixed;z-index:9999;width:'+r.width+'px;left:'+r.left+'px;top:'+r.top+'px;opacity:0.88;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,0.22);border-radius:8px;transform:scale(1.04);';
+
+  function touchInitDrag(card, touch) {
+    touchDragId = card.dataset.id;
+    touchOriginCard = card;
+    var r = card.getBoundingClientRect();
+    touchClone = card.cloneNode(true);
+    touchClone.style.cssText = 'position:fixed;z-index:9999;width:'+r.width+'px;left:'+r.left+'px;top:'+r.top+'px;opacity:0.88;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,0.22);border-radius:8px;transform:scale(1.04);transition:transform .1s;';
     document.body.appendChild(touchClone);
     card.classList.add('touch-dragging');
-    if(navigator.vibrate) navigator.vibrate(40);
+    if (navigator.vibrate) navigator.vibrate(40);
   }
-  function touchMoveDrag(touch){
-    if(!touchClone) return;
-    touchClone.style.left=(touch.clientX-touchClone.offsetWidth/2)+'px';
-    touchClone.style.top=(touch.clientY-40)+'px';
+
+  function touchMoveDrag(touch) {
+    if (!touchClone) return;
+    var w = touchClone.offsetWidth;
+    touchClone.style.left = (touch.clientX - w/2) + 'px';
+    touchClone.style.top  = (touch.clientY - 40) + 'px';
     document.querySelectorAll('.col').forEach(function(c){ c.classList.remove('drag-over'); });
-    var el=document.elementFromPoint(touch.clientX,touch.clientY);
-    var col=el&&el.closest&&el.closest('.col');
-    if(col) col.classList.add('drag-over');
+    var el = document.elementFromPoint(touch.clientX, touch.clientY);
+    var col = el && el.closest && el.closest('.col');
+    if (col) col.classList.add('drag-over');
   }
-  function touchEndDrag(touch){
-    var el=document.elementFromPoint(touch.clientX,touch.clientY);
-    var col=el&&el.closest&&el.closest('.col');
-    if(col){ var cc=col.querySelector('.col-cards'); if(cc){ var id=cc.id.replace('cards-',''); if(id&&touchDragId) moverCol(touchDragId,id); } }
+
+  function touchEndDrag(touch) {
+    var el = document.elementFromPoint(touch.clientX, touch.clientY);
+    var col = el && el.closest && el.closest('.col');
+    if (col) {
+      var cards = col.querySelector('.col-cards');
+      if (cards) { var colId = cards.id.replace('cards-',''); if (colId && touchDragId) moverCol(touchDragId, colId); }
+    }
     touchCleanup();
   }
-  function touchCleanup(){
-    if(touchClone){ touchClone.remove(); touchClone=null; }
-    if(touchOriginCard){ touchOriginCard.classList.remove('touch-dragging'); touchOriginCard=null; }
+
+  function touchCleanup() {
+    if (touchClone) { touchClone.remove(); touchClone = null; }
+    if (touchOriginCard) { touchOriginCard.classList.remove('touch-dragging'); touchOriginCard = null; }
     document.querySelectorAll('.col').forEach(function(c){ c.classList.remove('drag-over'); });
-    touchDragId=null;
+    touchDragId = null;
   }
 
   async function cargarGmail() {
@@ -730,7 +838,138 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     } catch(e) { btn.textContent = '❌ Error al cargar Gmail'; console.error(e); }
     setTimeout(function(){ btn.textContent = '⭐ Cargar Gmail destacados'; btn.disabled = false; }, 3000);
   }
+  window.editarTarea = editarTarea;
   window.cargarGmail = cargarGmail;
+
+
+  (function importarDailyTL12062026() {
+    var ahora = new Date().toISOString();
+    var nuevasVicky = [
+      { id:'d1206v1', texto:'Revisar mail del cliente Empower: evaluar cambios de alcance y definir costos adicionales (todo lo fuera de presupuesto se cobra)', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-12', origen:'Daily TL 12/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'d1206v2', texto:'Reunirse con Nahuel para revisar diferencias AMIA (doc de Alex) y definir tickets y correcciones técnicas', col:'hoy', proyecto:'amia', resp:'vicky', fecha:'2026-06-12', origen:'Daily TL 12/06', imp:true, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agV = 0;
+    nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+    if (agV > 0) saveData(data);
+    var nuevasTeam = [
+      { id:'d1206t1', texto:'Analizar doc de Alex sobre diferencias AMIA/Cuidamia y coordinar reunión con Vicky', resp:'nahuel', proyecto:'amia', fecha:'2026-06-12', imp:true, done:false, origen:'Daily TL 12/06', createdAt:ahora },
+      { id:'d1206t2', texto:'Presentar Demo Reconocimiento "las Vikis" — 14hs (equipo listo, batches redefinidos documentados)', resp:'alex', proyecto:'power', fecha:'2026-06-12', imp:true, done:false, origen:'Daily TL 12/06', createdAt:ahora },
+      { id:'d1206t3', texto:'Finalizar deploy Empower con Seba — demo 11hs lista, cerrar últimas tareas del sprint', resp:'agus', proyecto:'power', fecha:'2026-06-12', imp:false, done:false, origen:'Daily TL 12/06', createdAt:ahora },
+    ];
+    var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+    var agT = 0;
+    nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+    if (agT > 0) saveTeam(teamData);
+  })();
+
+  (function importarGmailStarred12062026() {
+    var ahora = new Date().toISOString();
+    var nuevas = [
+      { id:'gmail-ghl-turistologo', gmailThreadId:'19e8f1f52f44551b', texto:'El Turistólogo — evaluar y presupuestar integración Go High Level en la web (solicitud Salvador Dell'Acqua, 10/06)', col:'hoy', proyecto:'elclick', resp:'vicky', fecha:'2026-06-15', origen:'Gmail ⭐ salvador@utriper.com 10/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'gmail-amia-focusxlsx', gmailThreadId:'19ead9f2e806f680', texto:'AMIA Correcciones focus.xlsx — Javier Ciccarelli realizó cambios (08-09/06): revisar con Nahuel si requieren acción', col:'hoy', proyecto:'amia', resp:'vicky', fecha:'2026-06-13', origen:'Gmail ⭐ jciccarelli@amia 09/06', imp:false, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsExistentes = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agregadas = 0;
+    nuevas.forEach(function(t) { if (!idsExistentes.has(t.id)) { data.tareas.push(t); agregadas++; } });
+    if (agregadas > 0) saveData(data);
+  })();
+
+  (function importarBarrido13062026() {
+    var ahora = new Date().toISOString();
+    var nuevas = [
+      { id:'gmail-amia-daniela1206', gmailThreadId:'19eb730d0e3fefe9', texto:'AMIA — Revisar y responder a Daniela Maero: confirmó errores sin resolver (filtros de edad no migrados). Coordinar con Nahuel próximos pasos', col:'hoy', proyecto:'amia', resp:'vicky', fecha:'2026-06-13', origen:'Gmail ⭐ dmaero@amia.org.ar 12/06', imp:true, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsExistentes = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agregadas = 0;
+    nuevas.forEach(function(t) { if (!idsExistentes.has(t.id)) { data.tareas.push(t); agregadas++; } });
+    if (agregadas > 0) saveData(data);
+  })();
+
+  (function importarBarrido14062026() {
+    var ahora = new Date().toISOString();
+    var nuevasVicky = [
+      { id:'gmail-zlo-propuesta1306', gmailThreadId:'19eb89e8b97aa956', texto:'ZLO — Enviar datos de cuenta bancaria a feraduriz@gmail.com: confirmaron propuesta de 4 cambios y aguardan transferencia del pago', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-16', origen:'Gmail ⭐ feraduriz@gmail.com 13/06', imp:true, addedDate:ahora, createdAt:ahora },
+    ];
+    var nuevasTeam = [
+      { id:'gmail-zlo-cloudflare1306', texto:'Actualizar nameservers de zlestore.com para activar protección Cloudflare', resp:'seba', proyecto:'zlo', fecha:'2026-06-16', imp:true, done:false, origen:'Gmail ⭐ Cloudflare 13/06', createdAt:ahora },
+    ];
+    var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agV = 0;
+    nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+    if (agV > 0) saveData(data);
+    var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+    var agT = 0;
+    nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+    if (agT > 0) saveTeam(teamData);
+  })();
+
+  // ── BARRIDO 15/06/2026 ──────────────────────────────────
+  (function importarBarrido15062026() {
+    // Lunes 15/06. Reuniones del día:
+    // 08:00hs Empower Informe de avance 2 (con Victoria Fornieles) — doc "informe empower jun 2026" modificado a las 21:36
+    // 09:45hs Daily equipo TL — sin doc Gemini en Drive
+    // 12:01hs BDA Reunión con Vicky — DECLINADA por Vicky
+    // Sin nuevos Gmail destacados desde el 14/06. Drive inbox vacío.
+    var ahora = new Date().toISOString();
+    var nuevasVicky = [
+      { id:'b1506v1', texto:'Confirmar envío formal del Informe de Progreso Empower (Grant G-202503-02829) a Ingrid Abanto (iabanto@empowerweb.org) y Daniel Parnetti — doc editado el 15/06, vencía ese día', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-16', origen:'Empower Informe de avance 2 — 08:00hs 15/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'b1506v2', texto:'Revisar si hay doc Gemini de la Daily TL 15/06 en Drive y cargar los pendientes del equipo', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-16', origen:'Daily TL 15/06', imp:false, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agV = 0;
+    nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+    if (agV > 0) saveData(data);
+  })();
+
+
+  // ── BARRIDO 16/06/2026 ──────────────────────────────────
+  (function importarBarrido16062026() {
+    // Reuniones 16/06 con minuta Gemini:
+    // 09:30 Reu con Pau (Vistas) — doc OK
+    // 11:15 Feedback Conectados (Empower / Alfredo Kohan + Ingrid) — doc OK
+    // 14:30 Reu con VF y VL / Martina Renzi (BDA → Finnegans) — doc OK
+    // Sin minuta: Daily TL 16/06, AMIA Reunion 10:15, ZL Daily 16:30
+    var ahora = new Date().toISOString();
+    var nuevasVicky = [
+      { id:'b1606v1', texto:'Consultar con Daniel Feinman condiciones de Vistas: cómo participar con dos unidades distintas bajo un mismo paraguas jurídico, y si pueden asistir las dos (VL y VF)', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-20', origen:'Reu con Pau 16/06 09:30hs — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b1606v2', texto:'Enviar a Ingrid Abanto (Empower) las dos alternativas para organizar la arquitectura del sitio con múltiples idiomas', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-20', origen:'Feedback Conectados 16/06 11:15hs — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b1606v3', texto:'BDA — Evaluar internamente con VF la viabilidad de traspasar la continuidad del proyecto al equipo Finnegans (Ulises Stortini). Definir pasos y comunicarlos', col:'hoy', proyecto:'bda', resp:'vicky', fecha:'2026-06-19', origen:'Reu Martina Renzi (Finnegans) 16/06 14:30hs — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'b1606v4', texto:'BDA — Gestionar cobro del 50% de deuda pendiente antes de confirmar el cierre del contrato', col:'hoy', proyecto:'bda', resp:'vicky', fecha:'2026-06-19', origen:'Reu Martina Renzi (Finnegans) 16/06 14:30hs — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'b1606v5', texto:'BDA — Si se decide la transición: coordinar charla técnica entre equipo FORIT y Ulises/Dani (Finnegans) para revisión de código y transferencia de accesos', col:'seguimiento', proyecto:'bda', resp:'vicky', fecha:'', origen:'Reu Martina Renzi (Finnegans) 16/06 14:30hs — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agV = 0;
+    nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+    if (agV > 0) saveData(data);
+    var nuevasTeam = [
+      { id:'b1606t1', texto:'Enviar por escrito los detalles sobre la implementación de métricas y el funcionamiento del contador de descargas en la plataforma Empower', resp:'agus', proyecto:'power', fecha:'2026-06-20', imp:false, done:false, origen:'Feedback Conectados 16/06 11:15hs — Gemini', createdAt:ahora },
+      { id:'b1606t2', texto:'Estudiar e implementar la búsqueda por tipo de recurso usando el sistema de etiquetas actual en Empower', resp:'agus', proyecto:'power', fecha:'2026-06-20', imp:false, done:false, origen:'Feedback Conectados 16/06 11:15hs — Gemini', createdAt:ahora },
+    ];
+    var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+    var agT = 0;
+    nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+    if (agT > 0) saveTeam(teamData);
+  })();
+
+  // ── BARRIDO 17/06/2026 ──────────────────────────────────
+  (function importarBarrido17062026() {
+    // Gmail ⭐ nuevo hoy: AMIA Familias Cuidamia (Claudia Flores)
+    // Drive: "Etapa 5 La Liga.docx" creada 16/06 21:17 — lista para presentar hoy
+    // Agenda hoy: Daily TL 09:45 | ForIT-Acn 12:00 | Empower 12:45 | La Liga 16:30
+    var ahora = new Date().toISOString();
+    var nuevasVicky = [
+      { id:'b1706v1', texto:'AMIA — Revisar y procesar base de datos de familias Cuidamia enviada por Claudia Flores (cflores@amia.org.ar). Coordinar con Nahuel próximos pasos', col:'hoy', proyecto:'amia', resp:'vicky', fecha:'2026-06-18', origen:'Gmail ⭐ cflores@amia.org.ar 17/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b1706v2', texto:'Reunión ForIT-Acn (Accenture) 12:00hs Teams — con Melina Casabene, Celina Davola y Florencia Val', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-17', origen:'Agenda 17/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b1706v3', texto:'Reunión Empower con Vicky L 12:45hs — revisar opciones de arquitectura multiidioma para presentar a Ingrid', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-17', origen:'Agenda 17/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b1706v4', texto:'Reunión La Liga con Vic 16:30hs — presentar propuesta Etapa 5 (USD 2.360, 2 meses). Doc "Etapa 5 La Liga.docx" listo en Drive', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'2026-06-17', origen:'Agenda 17/06 + Drive 16/06', imp:true, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agV = 0;
+    nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+    if (agV > 0) saveData(data);
+  })();
+
 
   renderBoard();
   setTimeout(setupColDrop, 100);
