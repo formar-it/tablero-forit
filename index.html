@@ -967,7 +967,163 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   })();
 
 
-  renderBoard();
+
+  (function importarBarrido18062026() {
+      // Fuentes procesadas:
+      // - Daily TL 17/06 09:44 (doc Gemini encontrado en Drive sharedWithMe)
+      // - Montessori: Reu con Vic L 17/06 14:00 (doc Gemini encontrado en Drive)
+      // - Gmail ⭐ nuevos 16-17/06: pago Alex Pumari, Soledad Info ForIT, recibo ZLO Sprint3, alerta presupuesto ZLO etapa5
+      // - Empower: factura 2do pago creada 17/06 (Invoice $6,550)
+      // - Agenda hoy 18/06: Daily TL 09:45 | Revisión web FORIT 10:15 | Montessori Reu 14:00
+      var ahora = new Date().toISOString();
+  
+      // — Tareas Vicky surgidas de Daily TL 17/06 —
+      var nuevasVicky = [
+        { id:'d1706v1', texto:'Confirmar cierre oficial de BDA y comunicar reasignación de Alex Lucero a La Liga — informar al equipo y actualizar Airtable', col:'hoy', proyecto:'bda', resp:'vicky', fecha:'2026-06-19', origen:'Daily TL 17/06 09:44 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+        { id:'d1706v2', texto:'Mantener abiertos los canales de comunicación con el equipo AMIA en standby — animar a los miembros a practicar y mantener el ritmo durante la pausa', col:'seguimiento', proyecto:'amia', resp:'vicky', fecha:'', origen:'Daily TL 17/06 09:44 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        // — Tareas Vicky surgidas de Montessori Reu 17/06 —
+        { id:'mont1706v1', texto:'Montessori — Enviar Excel con propuesta original del proyecto y listado de tareas técnicas al equipo (Josué, Pilar, Lucas)', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'2026-06-19', origen:'Montessori Reu 17/06 14:00 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+        { id:'mont1706v2', texto:'Montessori — Crear sección en Airtable para seguimiento de actividades del equipo (tabla de tareas y bugs)', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'2026-06-19', origen:'Montessori Reu 17/06 14:00 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'mont1706v3', texto:'Montessori — Verificar consumo de tráfico del sitio en AWS', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'2026-06-20', origen:'Montessori Reu 17/06 14:00 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'mont1706v4', texto:'Montessori — Solicitar a Seba acceso a la base de datos para armar entorno de pruebas separado de producción', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'2026-06-19', origen:'Montessori Reu 17/06 14:00 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'mont1706v5', texto:'Montessori — Crear carpeta de Drive con documentación, propuestas y referencias de apps competidoras; compartir acceso vía Discord al equipo', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'2026-06-20', origen:'Montessori Reu 17/06 14:00 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        // — Gmail ⭐ 16-17/06 —
+        { id:'gmail-pago-alexpumari', gmailThreadId:'19ed604e7e7ce211', texto:'Pago pendiente FORIT — gestionar pago a Alex Pumari (alerta Airtable 17/06)', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-19', origen:'Gmail ⭐ Airtable 17/06', imp:true, addedDate:ahora, createdAt:ahora },
+        { id:'gmail-soledad-forit', gmailThreadId:'19ebd3d395f7e449', texto:'Soledad (sole8a@gmail.com) — Leer y responder propuesta de estrategia de ventas y posicionamiento de ForIT', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-20', origen:'Gmail ⭐ sole8a@gmail.com 17/06', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'gmail-recibo-zlo-s3', gmailThreadId:'19ed6376bd6e9387', texto:'ZLO Sprint 3 — Verificar y registrar recibo por $446.290 (Desarrollo Web) en planilla contable', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-19', origen:'Gmail ⭐ Airtable recibo 17/06', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'gmail-alerta-presupuesto-zlo5', gmailThreadId:'19ed2c88006b69c5', texto:'ALERTA: revisar y ajustar presupuesto de JR de ZLO Store Etapa 5 — se está excediendo el límite previsto', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-19', origen:'Gmail ⭐ Airtable alerta 16/06', imp:true, addedDate:ahora, createdAt:ahora },
+        // — Empower segundo pago —
+        { id:'empower-2dopago-1706', texto:'Empower — Gestionar envío de factura de 2do pago ($6.550 USD) a pbravo@empowerweb.org y dparnetti@empowerweb.org. Invoice template creado en Drive el 17/06', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-20', origen:'Drive Invoice Empower 2do pago 17/06', imp:true, addedDate:ahora, createdAt:ahora },
+        // — Agenda 18/06 —
+        { id:'ag1806v1', texto:'Revisión web FORIT 10:15hs — reunión con Victoria Fornieles (programacion@)', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-18', origen:'Agenda 18/06', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'ag1806v2', texto:'Montessori: Reu con Vic L 14:00hs — segunda sesión de revisión técnica con Josué, Pilar, Lucas', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'2026-06-18', origen:'Agenda 18/06', imp:false, addedDate:ahora, createdAt:ahora },
+      ];
+      var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+      var agV = 0;
+      nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+      if (agV > 0) saveData(data);
+  
+      // — Tareas equipo surgidas de Daily TL 17/06 —
+      var nuevasTeam = [
+        { id:'d1706t1', texto:'Actualizar script: ajustar código para contemplar el contador de incidencias y eliminar instancias repetidas de partidos', resp:'martina', proyecto:'liga', fecha:'2026-06-19', imp:true, done:false, origen:'Daily TL 17/06 — Gemini', createdAt:ahora },
+        { id:'d1706t2', texto:'Fomentar colaboración: incentivar a los miembros del equipo a mantener ritmo de trabajo mientras AMIA está en pausa', resp:'nahuel', proyecto:'amia', fecha:'2026-06-20', imp:false, done:false, origen:'Daily TL 17/06 — Gemini', createdAt:ahora },
+        { id:'d1706t3', texto:'Pulir documentación técnica pendiente en archivos del proyecto AMIA', resp:'nahuel', proyecto:'amia', fecha:'2026-06-20', imp:false, done:false, origen:'Daily TL 17/06 — Gemini', createdAt:ahora },
+        { id:'d1706t4', texto:'Dar bienvenida formal a la nueva integrante que se incorpora al equipo', resp:'lucio', proyecto:'coordi', fecha:'2026-06-18', imp:false, done:false, origen:'Daily TL 17/06 — Gemini', createdAt:ahora },
+        { id:'d1706t5', texto:'Enviar lista de tareas pendientes al equipo de gestión (Vicky/Bruno)', resp:'alex', proyecto:'liga', fecha:'2026-06-19', imp:true, done:false, origen:'Daily TL 17/06 — Gemini', createdAt:ahora },
+        // — Tareas equipo Montessori (juniors asignados al proyecto) —
+        { id:'mont1706t1', texto:'Montessori — Identificar y documentar todos los errores/fallos encontrados en la plataforma, con causas y evidencia visual (sin escribir en producción)', resp:'lucio', proyecto:'montessori', fecha:'2026-06-20', imp:true, done:false, origen:'Montessori Reu 17/06 — Gemini', createdAt:ahora },
+        { id:'mont1706t2', texto:'Montessori — Documentar flujos de trabajo, procesos operativos y guía de configuración inicial del entorno', resp:'lucio', proyecto:'montessori', fecha:'2026-06-20', imp:false, done:false, origen:'Montessori Reu 17/06 — Gemini', createdAt:ahora },
+      ];
+      var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+      var agT = 0;
+      nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+      if (agT > 0) saveTeam(teamData);
+    })();
+  
+  
+    // ── RELEVE COMPLETO TRANSCRIPCIONES GEMINI (hasta 18/06/2026) ────────────────
+    (function importarReleveCompleto() {
+      // Reuniones: Demo Empower 12/06 | Daniel Feinmann 12/06 | Demo Reconoc 12/06
+      // Juan Vieyra 09/06 + 10/06 | Revision consejo 09/06 | Reunión técnica Liga AWS 10/06
+      // Damián Perez 01/06 | Reu Liga 11/05 | Demo AMIA 08/05 | Validación ZL Store 08/05
+      // Demo Empower 13/05 | Hernan Kohan (El Click) 01/05
+      var ahora = new Date().toISOString();
+      var nuevasVicky = [
+        { id:'relv-1206e1', texto:'Empower — Informar a Alfredo Kohan sobre las carencias detectadas en demo (menú mobile, navegación Enfoques/Ejes, filtros de recursos) y solicitar actualizaciones de diseño', col:'seguimiento', proyecto:'power', resp:'vicky', fecha:'', origen:'Demo Empower 12/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-1206vt1', texto:'Vistage — Analizar propuesta de Daniel Feinmann: revisar los números de la fundación y evaluar viabilidad membresía grupo Triple Impacto ($150.000/mes)', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu Daniel Feinmann 12/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-1206vt2', texto:'Vistage — Contactar a Daniel Feinmann para comunicar decisión sobre la membresía (danielfeinmann@gmail.com)', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu Daniel Feinmann 12/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-0906rc1', texto:'Transferir datos de egresados comisión 25 a la planilla violeta y asegurar que la info de estudiantes esté actualizada en el reporte', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Revision reu consejo 09/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-0906rc2', texto:'Enviar respuesta a personas entrevistadas para el puesto semisenior y finalizar el proceso de evaluación de candidatos', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Revision reu consejo 09/06 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+        { id:'relv-0906rc3', texto:'Solicitar a Bruno o Flor lista de términos y condiciones para respaldar documentación comercial — elaborar cláusulas que definan límites profesionales con clientes', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Revision reu consejo 09/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-0906rc4', texto:'Notificar a Sol que el proceso de búsqueda y entrenamiento de estudiantes requiere 1 mes de anticipación mínimo', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Revision reu consejo 09/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-0906rc5', texto:'Contactar a Ailu o fundaciones para solicitar lista de egresados de San Miguel — iniciar convocatoria de candidatos', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Revision reu consejo 09/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-0906jv1', texto:'Comercial — Contactar candidata de LinkedIn con perfil de ventas en IBM para ofrecerle rol comercial con comisión en ForIT', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu Juan Vieyra 09/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-0906jv2', texto:'Montessori — Enviar brief y modelo actual del producto a Juan Vieyra (juanmartinvieyra@gmail.com) para que evalúe y dé feedback', col:'seguimiento', proyecto:'montessori', resp:'vicky', fecha:'', origen:'Reu Juan Vieyra 09/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-0906jv3', texto:'Montessori — Consultar con Bruno el esfuerzo técnico necesario para neutralizar/replicar la plataforma Montessori', col:'seguimiento', proyecto:'montessori', resp:'vicky', fecha:'', origen:'Reu Juan Vieyra 09/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-1006jv1', texto:'Reconocimiento/RRHH — Analizar modelos de negocio para comercializar el sistema de evaluaciones; preparar presentación con funcionalidades del sistema', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu Juan Vieyra 10/06 10:21 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-1006jv2', texto:'Reconocimiento/RRHH — Elaborar video promocional del producto con colaboradores del equipo', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu Juan Vieyra 10/06 10:21 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-1006jv3', texto:'Reconocimiento/RRHH — Coordinar con Bruno la estructura del equipo encargado de analizar el desarrollo del proyecto', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu Juan Vieyra 10/06 10:21 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-1006aws1', texto:'Liga — Subir a Drive la grabación de la reunión técnica del 10/06 y el archivo de configuración de acceso seguro SSH que compartió Seba', col:'seguimiento', proyecto:'liga', resp:'vicky', fecha:'', origen:'Reunión técnica Liga AWS 10/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-0106dp1', texto:'Somos Pymes / Damián Pérez — Enviar maqueta o demo de la plataforma de inserción laboral para agendar reunión de seguimiento', col:'mensual', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu Damián Perez 01/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-1105l1', texto:'Liga — Armar Excel con estimación de costo de funcionalidades Etapa 5: gestión de jugadores, persistencia de datos, Google Analytics, notificaciones Tuailo/WhatsApp', col:'mensual', proyecto:'liga', resp:'vicky', fecha:'', origen:'Reu con VL y la Liga 11/05 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-1105l2', texto:'Liga — Buscar en Notion/Drive ejemplo de cómo FD arma tareas técnicas detalladas (estimaciones optimista/pesimista/medio) para compartir con el equipo', col:'mensual', proyecto:'liga', resp:'vicky', fecha:'', origen:'Reu con VL y la Liga 11/05 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'relv-0105hk1', texto:'El Click ZLO — Revisar textos del email de confirmación de delivery + confirmar que productos retornables aparecen al final del pedido', col:'mensual', proyecto:'zlo', resp:'vicky', fecha:'', origen:'Reu Hernan Kohan 01/05 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+      ];
+      var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+      var agV = 0;
+      nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+      if (agV > 0) saveData(data);
+  
+      var nuevasTeam = [
+        { id:'relv-1206et1', texto:'Corregir menú hamburguesa mobile: ajustar para que ocupe correctamente toda la pantalla en dispositivos móviles', resp:'agus', proyecto:'power', fecha:'', imp:true, done:false, origen:'Demo Empower 12/06 — Gemini', createdAt:ahora },
+        { id:'relv-1206et2', texto:'Optimizar flujo de navegación: corregir recorrido entre Enfoques y Ejes para que el usuario acceda de forma lógica sin retroceder constantemente', resp:'agus', proyecto:'power', fecha:'', imp:true, done:false, origen:'Demo Empower 12/06 — Gemini', createdAt:ahora },
+        { id:'relv-1206et3', texto:'Sincronizar filtros de recursos: ajustar botones "Ver recursos" para que apliquen correctamente los filtros de categorías seleccionadas', resp:'agus', proyecto:'power', fecha:'', imp:false, done:false, origen:'Demo Empower 12/06 — Gemini', createdAt:ahora },
+        { id:'relv-1206et4', texto:'Mejorar búsqueda: optimizar funcionalidad y aplicar lógica de filtrado consistente con opción de limpiar resultados', resp:'agus', proyecto:'power', fecha:'', imp:false, done:false, origen:'Demo Empower 12/06 — Gemini', createdAt:ahora },
+        { id:'relv-1206et5', texto:'Agregar botones de navegación (arriba, atrás, adelante) para mejorar flujo de lectura de información', resp:'agus', proyecto:'power', fecha:'', imp:false, done:false, origen:'Demo Empower 12/06 — Gemini', createdAt:ahora },
+        { id:'relv-1206et6', texto:'Preparar minuta organizada con correcciones necesarias y preguntas pendientes para el cliente o Alfredo Kohan', resp:'agus', proyecto:'power', fecha:'', imp:false, done:false, origen:'Demo Empower 12/06 — Gemini', createdAt:ahora },
+        { id:'relv-1206r1', texto:'Subir archivos de diseño Figma del producto Reconocimiento al canal general del equipo para revisión', resp:'alex', proyecto:'coordi', fecha:'', imp:false, done:false, origen:'Demo reconoc 12/06 — Gemini', createdAt:ahora },
+        { id:'relv-1206r2', texto:'Definir nombres finales y colores plenos de insignias (badges): votar entre "Entrega Profesional", "Presentación Efectiva" y otras opciones', resp:'alex', proyecto:'coordi', fecha:'', imp:false, done:false, origen:'Demo reconoc 12/06 — Gemini', createdAt:ahora },
+        { id:'relv-1206r3', texto:'Actualizar perfiles en la plataforma de Reconocimiento: fotografías, certificaciones, tecnologías e info académica/profesional completa', resp:'alex', proyecto:'coordi', fecha:'', imp:false, done:false, origen:'Demo reconoc 12/06 — Gemini', createdAt:ahora },
+        { id:'relv-1006aws2', texto:'Compartir por Discord el archivo de configuración de acceso seguro SSH + guía de AWS del 10/06', resp:'seba', proyecto:'liga', fecha:'', imp:true, done:false, origen:'Reunión técnica Liga AWS 10/06 — Gemini', createdAt:ahora },
+        { id:'relv-1006aws3', texto:'Configurar acceso a la consola de AWS usando la guía proporcionada por Seba', resp:'martina', proyecto:'liga', fecha:'', imp:true, done:false, origen:'Reunión técnica Liga AWS 10/06 — Gemini', createdAt:ahora },
+        { id:'relv-1006aws4', texto:'Verificar que los permisos de acceso WBS sean los correctos para trabajar en la consola AWS', resp:'martina', proyecto:'liga', fecha:'', imp:false, done:false, origen:'Reunión técnica Liga AWS 10/06 — Gemini', createdAt:ahora },
+        { id:'relv-0805a1', texto:'AMIA — Coordinar con Seba el escalado de infraestructura multi-tenant a nivel productivo: configurar RDS de AWS + Minio', resp:'nahuel', proyecto:'amia', fecha:'', imp:false, done:false, origen:'Demo AMIA interna 08/05 — Gemini', createdAt:ahora },
+        { id:'relv-0805a2', texto:'AMIA — Integrar código multi-tenant (white-label) dentro del repositorio principal de AMIA', resp:'nahuel', proyecto:'amia', fecha:'', imp:false, done:false, origen:'Demo AMIA interna 08/05 — Gemini', createdAt:ahora },
+        { id:'relv-0805a3', texto:'AMIA — Realizar migración de base de datos al nuevo esquema multi-tenant', resp:'nahuel', proyecto:'amia', fecha:'', imp:false, done:false, origen:'Demo AMIA interna 08/05 — Gemini', createdAt:ahora },
+        { id:'relv-0805z1', texto:'ZLO Store — Compartir boceto del módulo de stock analytics con el equipo para revisión en detalle', resp:'lucio', proyecto:'zlo', fecha:'', imp:false, done:false, origen:'Validación plan ZL Store 08/05 — Gemini', createdAt:ahora },
+        { id:'relv-0805z2', texto:'ZLO Store — Preparar lista concisa de preguntas para el cliente sobre indicadores y umbrales de stock crítico', resp:'lucio', proyecto:'zlo', fecha:'', imp:false, done:false, origen:'Validación plan ZL Store 08/05 — Gemini', createdAt:ahora },
+        { id:'relv-1305p1', texto:'Empower — Poner en limpio documentación APB (entidades, flujos, diagrama) con estética de Alfred para el cliente final', resp:'agus', proyecto:'power', fecha:'', imp:false, done:false, origen:'Demo Empower 13/05 — Gemini', createdAt:ahora },
+        { id:'relv-1305p2', texto:'Empower — Realizar evaluaciones de performance del sistema y aplicar mejores prácticas de optimización', resp:'agus', proyecto:'power', fecha:'', imp:false, done:false, origen:'Demo Empower 13/05 — Gemini', createdAt:ahora },
+      ];
+      var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+      var agT = 0;
+      nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+      if (agT > 0) saveTeam(teamData);
+    })();
+  
+  
+    // ── BARRIDO SEMANA 18-19/06 (reuniones no procesadas) ────────────────────────
+    // Daily TL 18/06 09:35 | Montessori 18/06 13:59 | Reu con Alex web 18/06 16:31
+    // Daily TL 19/06 09:45 | Reu Lautaro Waisgold 19/06 09:01
+    (function importarSemana1819jun() {
+      var ahora = new Date().toISOString();
+      var nuevasVicky = [
+        // ── Daily TL 18/06 ──
+        { id:'d1806v1', texto:'Liga — Validar si el partido duplicado persiste en el listado y señalar cuál es exactamente para que Alex pueda corregirlo', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'', origen:'Daily TL 18/06 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+        { id:'d1806v2', texto:'ZLO — Enviar recordatorio urgente al cliente sobre el vencimiento del dominio para evitar interrupción del servicio', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'', origen:'Daily TL 18/06 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+        // ── Montessori 18/06 ──
+        { id:'m1806v1', texto:'Montessori Airtable — Agregar campo de selección para categorizar errores como "diseño" o "funcionalidad" (lo pidió Pilar Luna)', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'', origen:'Montessori Reu 18/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'m1806v2', texto:'Montessori Airtable — Configurar vista tipo Kanban para que el equipo organice el flujo de reporte de errores', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'', origen:'Montessori Reu 18/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        // ── Reu Lautaro Waisgold 19/06 ──
+        { id:'lw1906v1', texto:'Comunicación — Crear canal en Discord para coordinar el trabajo con Lautaro Waisgold (voluntario de comunicación y LinkedIn)', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu Lautaro Waisgold 19/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+      ];
+      var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+      var agV = 0;
+      nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+      if (agV > 0) saveData(data);
+  
+      var nuevasTeam = [
+        // ── Daily TL 18/06 ──
+        { id:'d1806t1', texto:'Coordinar reunión con Vicky para revisar cómo se visualiza la información de equipos y Team Leads en el sistema de Liga', resp:'alex', proyecto:'liga', fecha:'', imp:true, done:false, origen:'Daily TL 18/06 — Gemini', createdAt:ahora },
+        // ── Daily TL 19/06 ──
+        { id:'d1906t1', texto:'Preparar listado de tareas pendientes sobre Baches para que Vicky pueda revisarlas', resp:'alex', proyecto:'coordi', fecha:'', imp:true, done:false, origen:'Daily TL 19/06 — Gemini', createdAt:ahora },
+        { id:'d1906t2', texto:'Confirmar con Vicky la fecha definitiva para la reunión de demo con el cliente', resp:'lucio', proyecto:'zlo', fecha:'', imp:true, done:false, origen:'Daily TL 19/06 — Gemini', createdAt:ahora },
+        { id:'d1906t3', texto:'Notificar en el canal Tex Bits los detalles de la reunión y demo con cliente', resp:'lucio', proyecto:'zlo', fecha:'', imp:false, done:false, origen:'Daily TL 19/06 — Gemini', createdAt:ahora },
+        { id:'d1906t4', texto:'Monitorear desempeño y nivel de energía de Brisa en sus tareas diarias y reportar novedades', resp:'lucio', proyecto:'coordi', fecha:'', imp:false, done:false, origen:'Daily TL 19/06 — Gemini', createdAt:ahora },
+        // ── Reu con Alex web FORIT 18/06 ──
+        { id:'rw1806t1', texto:'Web FORIT — Crear documento centralizado para recopilar todas las notas del sitio (enviadas por Vic F por Discord)', resp:'alex', proyecto:'coordi', fecha:'', imp:false, done:false, origen:'Reu con Alex web FORIT 18/06 — Gemini', createdAt:ahora },
+        { id:'rw1806t2', texto:'Web FORIT — Implementar modificaciones visuales acordadas: reducir tamaño de tarjetas y ajustar layout discutido', resp:'alex', proyecto:'coordi', fecha:'', imp:false, done:false, origen:'Reu con Alex web FORIT 18/06 — Gemini', createdAt:ahora },
+        { id:'rw1806t3', texto:'Web FORIT — Probar combinaciones de colores para el botón de donar y garantizar legibilidad accesible', resp:'alex', proyecto:'coordi', fecha:'', imp:false, done:false, origen:'Reu con Alex web FORIT 18/06 — Gemini', createdAt:ahora },
+        // ── Montessori 18/06 ──
+        { id:'m1806t1', texto:'Montessori — Migrar toda la documentación de errores y mejoras relevadas en Notion hacia Airtable para centralizar el seguimiento', resp:'lucio', proyecto:'montessori', fecha:'', imp:true, done:false, origen:'Montessori Reu 18/06 — Gemini', createdAt:ahora },
+      ];
+      var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+      var agT = 0;
+      nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+      if (agT > 0) saveTeam(teamData);
+    })();
+
+    renderBoard();
   setTimeout(setupColDrop, 100);
 })();
 </script>
