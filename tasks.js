@@ -1,3 +1,22 @@
+// ── MIGRACIÓN AUTOMÁTICA: limpia HOY de tareas viejas ──────────────────────
+(function migrarTareasViejas() {
+  try {
+    var STORE_KEY = 'forit-kanban-v1';
+    var CUTOFF = '2026-06-20T00:00:00'; // tareas anteriores al 20/06 salen de HOY
+    var d = JSON.parse(localStorage.getItem(STORE_KEY) || '{"tareas":[]}');
+    var changed = false;
+    d.tareas.forEach(function(t) {
+      if (t.col === 'hoy' && t.createdAt && t.createdAt < CUTOFF) {
+        t.col = 'seguimiento';
+        changed = true;
+      }
+    });
+    if (changed) {
+      localStorage.setItem(STORE_KEY, JSON.stringify(d));
+    }
+  } catch(e) {}
+})();
+
 (function importarNuevas() {
     var ahora = new Date().toISOString();
     var nuevas = [
