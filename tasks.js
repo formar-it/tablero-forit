@@ -826,3 +826,32 @@
       nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
       if (agT > 0) saveTeam(teamData);
     })();
+    (function importarBarrido22062026() {
+      var ahora = new Date().toISOString();
+      var data = JSON.parse(localStorage.getItem('forit-kanban-v1') || '{"tareas":[]}');
+      var teamData = JSON.parse(localStorage.getItem('forit-team-v1') || '{"tareas":[]}');
+
+      var nuevasVicky = [
+        // ── Daily TL 22/06 ──
+        { id:'d2206v1', texto:'Montessori — Contactar al equipo para intentar adelantar la reunión (evitar conflicto con horario del partido)', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'', origen:'Daily TL 22/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'d2206v2', texto:'ZLO — Agendar demo con cliente: coordinar fecha y hora de la presentación', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'', origen:'Daily TL 22/06 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+      ];
+      var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+      var agV = 0;
+      nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+      if (agV > 0) saveData(data);
+
+      var nuevasTeam = [
+        // ── Daily TL 22/06 ──
+        { id:'d2206t1', texto:'Distribuir las tareas de test pendientes entre los miembros del equipo que no participan en la demo de mañana', resp:'lucio', proyecto:'zlo', fecha:'', imp:true, done:false, origen:'Daily TL 22/06 — Gemini', createdAt:ahora },
+        { id:'d2206t2', texto:'Realizar reunión 1 a 1 con Lourdes para revisar su organización entre el trabajo y la universidad', resp:'martina', proyecto:'liga', fecha:'', imp:true, done:false, origen:'Daily TL 22/06 — Gemini', createdAt:ahora },
+        { id:'d2206t3', texto:'Iniciar ronda de feedback con el equipo: solicitar y dar feedback a cada integrante (un feedback por día)', resp:'agus', proyecto:'power', fecha:'', imp:false, done:false, origen:'Daily TL 22/06 — Gemini', createdAt:ahora },
+        { id:'d2206t4', texto:'Iniciar ronda de feedback con el equipo: solicitar y dar feedback a cada integrante (un feedback por día)', resp:'martina', proyecto:'liga', fecha:'', imp:false, done:false, origen:'Daily TL 22/06 — Gemini', createdAt:ahora },
+        { id:'d2206t5', texto:'Iniciar ronda de feedback con el equipo: solicitar y dar feedback a cada integrante (un feedback por día)', resp:'lucio', proyecto:'zlo', fecha:'', imp:false, done:false, origen:'Daily TL 22/06 — Gemini', createdAt:ahora },
+        { id:'d2206t6', texto:'Web FORIT — Finalizar correcciones del diseño y entregar el material al equipo de reconocimiento', resp:'alex', proyecto:'coordi', fecha:'', imp:true, done:false, origen:'Daily TL 22/06 — Gemini', createdAt:ahora },
+      ];
+      var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+      var agT = 0;
+      nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+      if (agT > 0) saveTeam(teamData);
+    })();
