@@ -17,6 +17,17 @@
   } catch(e) {}
 })();
 
+// ── ESTADO GLOBAL ────────────────────────────────────────────────────────────
+var STORE_KEY = 'forit-kanban-v1';
+var TEAM_KEY  = 'forit-team-v1';
+// Carga post-migración (la migración ya actualizó localStorage arriba)
+var data      = JSON.parse(localStorage.getItem(STORE_KEY)  || '{"tareas":[]}');
+var teamData  = JSON.parse(localStorage.getItem(TEAM_KEY)   || '{"tareas":[]}');
+function saveData(d)  { try { localStorage.setItem(STORE_KEY, JSON.stringify(d)); } catch(e) {} data = d; }
+function saveTeam(d)  { try { localStorage.setItem(TEAM_KEY,  JSON.stringify(d)); } catch(e) {} teamData = d; }
+var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
+
+
 (function importarNuevas() {
     var ahora = new Date().toISOString();
     var nuevas = [
@@ -855,3 +866,7 @@
       nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
       if (agT > 0) saveTeam(teamData);
     })();
+
+// ── RENDER INICIAL ──────────────────────────────────────────────────────────
+  renderBoard();
+  setTimeout(function(){ if(typeof setupColDrop === "function") setupColDrop(); }, 100);
