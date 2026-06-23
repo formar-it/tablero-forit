@@ -867,6 +867,32 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
       if (agT > 0) saveTeam(teamData);
     })();
 
+
+    (function importarBarrido23062026() {
+      var ahora = new Date().toISOString();
+      var data = JSON.parse(localStorage.getItem('forit-kanban-v1') || '{"tareas":[]}');
+      var teamData = JSON.parse(localStorage.getItem('forit-team-v1') || '{"tareas":[]}');
+
+      var nuevasVicky = [
+        // ── Reu. Lautaro Waisgold 23/06 (comunicación y LinkedIn) ──
+        { id:'b2306v1', texto:'Comunicación — Dar acceso a la cuenta oficial de LinkedIn de FORIT a Lautaro Waisgold para que pueda gestionar contenido', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu. Lautaro Waisgold 23/06 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+        { id:'b2306v2', texto:'Comunicación — Agregar a Lautaro Waisgold como invitado a los eventos de calendario del equipo FORIT para que observe el trabajo real', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu. Lautaro Waisgold 23/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        { id:'b2306v3', texto:'Comunicación — Revisar y validar la propuesta de contenido LinkedIn que elaborará Lautaro (orientada a captación de clientes pymes)', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu. Lautaro Waisgold 23/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+        // ── Gmail ⭐ Oracle 22/06 ──
+        { id:'b2306v4', texto:'Oracle — Respuesta de Ileana Yacusso: masterclass IA confirmada para agosto (la organiza Camilo Eguiazabal), pasantías sin visibilidad de avance, Violeta de Urquiza contactada para compra de productos Formar. Leer y hacer seguimiento cuando haya novedades de Oracle', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Gmail ⭐ Oracle — 22/06', imp:false, addedDate:ahora, createdAt:ahora },
+      ];
+      var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+      var agV = 0;
+      nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+      if (agV > 0) saveData(data);
+
+      var nuevasTeam = [];
+      var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+      var agT = 0;
+      nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+      if (agT > 0) saveTeam(teamData);
+    })();
+
 // ── RENDER INICIAL ──────────────────────────────────────────────────────────
   renderBoard();
   setTimeout(function(){ if(typeof setupColDrop === "function") setupColDrop(); }, 100);
