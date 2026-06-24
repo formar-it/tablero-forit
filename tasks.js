@@ -243,7 +243,7 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
     var men = data.tareas.filter(function(t){ return t.col==='mensual' && !t.done && !t.descartada; }).length;
     var done = data.tareas.filter(function(t){ return (t.done || t.col==='terminadas') && !t.descartada; }).length;
     var imp = data.tareas.filter(function(t){ return t.imp && !t.done && t.col!=='terminadas' && !t.descartada; }).length;
-    document.getElementById('stats-bar').innerHTML = '<span class="stat-chip" style="background:#ffe4e6;color:#be123c">📋 TO DO: ' + todo + '</span><span class="stat-chip hoy">📌 HOY: ' + hoy + '</span><span class="stat-chip seg">🔄 Seguimiento: ' + seg + '</span><span class="stat-chip men">📅 Mensual: ' + men + '</span><span class="stat-chip done">✅ Terminadas: ' + done + '</span>' + (imp>0?'<span class="stat-chip imp">🔴 Importantes: ' + imp + '</span>':'');
+    document.getElementById('stats-bar').innerHTML = '<span class="stat-chip" style="background:#ffe4e6;color:#be123c">📋 TO DO: ' + todo + '</span><span class="stat-chip hoy">📌 HOY: ' + hoy + '</span><span class="stat-chip seg">🔄 Seguimiento: ' + seg + '</span><span class="stat-chip men">📅 Mensual: ' + men + '</span><span class="stat-chip done" onclick="verTerminadas()" style="cursor:pointer" title="Click para reabrir tareas terminadas">✅ Terminadas: ' + done + ' ▾</span>' + (imp>0?'<span class="stat-chip imp">🔴 Importantes: ' + imp + '</span>':'');
   }
 
   function renderTeam() {
@@ -570,6 +570,19 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
   window.cargarGmail = cargarGmail;
   window.descartarTarea = descartarTarea;
   window.descartarTeam = descartarTeam;
+
+  function verTerminadas() {
+    var term = data.tareas.filter(function(t){ return t.col === 'terminadas' && !t.descartada; });
+    if (term.length === 0) { alert('No hay terminadas'); return; }
+    var lst = term.map(function(t,i){ return (i+1) + '. ' + t.texto.slice(0,90); }).join('\n');
+    var resp = prompt('Tareas terminadas (' + term.length + '). Numeros a REABRIR separados por coma, o "todas":\n\n' + lst, '');
+    if (!resp) return;
+    var idx = resp.trim().toLowerCase() === 'todas' ? term.map(function(_,i){return i;}) : resp.split(',').map(function(s){return parseInt(s.trim(),10)-1;}).filter(function(n){return n>=0 && n<term.length;});
+    idx.forEach(function(i){ var t=term[i]; t.col='hoy'; t.done=false; delete t.completedAt; t.lastMovedToHoy=new Date().toISOString(); t.promoBadge='🔄 Reabierta'; });
+    saveData(data); renderBoard();
+    alert('Reabiertas ' + idx.length);
+  }
+  window.verTerminadas = verTerminadas;
 
   // Auto-sync Gmail destacados al abrir el tablero (solo en Cowork)
   if (window.cowork) { setTimeout(cargarGmail, 1500); }
@@ -943,6 +956,22 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
     var agT = 0;
     nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
     if (agT > 0) saveTeam(teamData);
+  })();
+
+  // ── BARRIDO 24/06/2026 (run 2) ─────────────────────────
+  (function importarBarrido24062026Run2() {
+    var ahora = new Date().toISOString();
+    var nuevas = [
+      { id:'liga2406martina-url', texto:'Reiterar a Martina la entrega al cliente Javier de la URL alternativa de Liga para pruebas continuas — sigue pendiente (mencionado nuevamente en daily)', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'2026-06-25', origen:'Pedido Vicky 24/06', imp:true, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+    nuevas.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); } });
+    saveData(data);
+    var b = data.tareas.find(function(t){ return t.id === 'b1506v1'; });
+    if (b && b.done && b.col === 'terminadas') {
+      b.col = 'hoy'; b.done = false; delete b.completedAt; b.lastMovedToHoy = ahora; b.promoBadge = '🔄 Reabierta';
+      saveData(data);
+    }
   })();
 
   renderBoard();
