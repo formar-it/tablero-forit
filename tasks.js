@@ -112,7 +112,7 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
     ahora.setHours(0,0,0,0);
     var cambiaron = false;
     data.tareas.forEach(function(t) {
-      if (t.done || t.col === 'hoy' || t.col === 'terminadas') return;
+      if (t.done || t.col === 'hoy' || t.col === 'terminadas' || t.descartada) return;
       // CUALQUIER COLUMNA → HOY: si la fecha de vencimiento llegó o pasó
       if (t.fecha) {
         var venc = new Date(t.fecha); venc.setHours(0,0,0,0);
@@ -178,10 +178,10 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
   function renderBoard() {
     var filtProj = document.getElementById('filtro-proyecto').value;
     var busq = document.getElementById('busqueda').value.toLowerCase();
-    var tareas = data.tareas.filter(function(t){ return t.col !== 'terminadas'; });
+    var tareas = data.tareas.filter(function(t){ return t.col !== 'terminadas' && !t.descartada; });
     if (filtProj) tareas = tareas.filter(function(t){ return t.proyecto === filtProj; });
     if (busq) tareas = tareas.filter(function(t){ return t.texto.toLowerCase().indexOf(busq) >= 0; });
-    var terminadas = data.tareas.filter(function(t){ return t.col === 'terminadas'; });
+    var terminadas = data.tareas.filter(function(t){ return t.col === 'terminadas' && !t.descartada; });
     var cols = [
       { id:'todo', label:'TO DO', icon:'📋', dot:'dot-todo', hint:'Tareas planificadas para hacer.' },
       { id:'hoy', label:'HOY', icon:'📌', dot:'dot-hoy', hint:'Tareas de hoy y vencidas.' },
@@ -225,6 +225,7 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
         if (t.col === 'terminadas') moveBtns += '<button class="card-btn" onclick="moverCol(\'' + t.id + '\',\'hoy\')">↩</button>';
         moveBtns += '<button class="card-btn" onclick="editarTarea(\'' + t.id + '\')">✏️</button>';
         moveBtns += '<button class="card-btn" onclick="toggleDone(\'' + t.id + '\',true)">✅</button>';
+        moveBtns += '<button class="card-btn" title="Descartar (no vuelve a aparecer)" onclick="descartarTarea(\'' + t.id + '\')">❌</button>';
         card.innerHTML = '<div class="card-top"><div class="card-check"><input type="checkbox" ' + (t.done?'checked':'') + ' onchange="toggleDone(\'' + t.id + '\',this.checked)"></div><div class="card-body"><div class="card-title">' + t.texto + '</div><div class="card-chips">' + chips + '</div></div></div><div class="card-actions">' + moveBtns + '</div><div class="card-footer"><div class="card-meta">' + (fd.text?'<span class="card-date ' + fd.cls + '">' + fd.text + '</span>':'') + (t.resp && t.resp!=='vicky'?'<span class="card-resp">' + (RESP_EMOJI[t.resp]||'') + ' ' + t.resp + '</span>':'') + '</div><div style="font-size:9px;color:var(--muted);font-style:italic;text-align:right;">' + (t.origen||'') + '</div></div>';
         cardsEl.appendChild(card);
       });
@@ -236,12 +237,12 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
   }
 
   function renderStats() {
-    var todo = data.tareas.filter(function(t){ return t.col==='todo' && !t.done; }).length;
-    var hoy = data.tareas.filter(function(t){ return t.col==='hoy' && !t.done; }).length;
-    var seg = data.tareas.filter(function(t){ return t.col==='seguimiento' && !t.done; }).length;
-    var men = data.tareas.filter(function(t){ return t.col==='mensual' && !t.done; }).length;
-    var done = data.tareas.filter(function(t){ return t.done || t.col==='terminadas'; }).length;
-    var imp = data.tareas.filter(function(t){ return t.imp && !t.done && t.col!=='terminadas'; }).length;
+    var todo = data.tareas.filter(function(t){ return t.col==='todo' && !t.done && !t.descartada; }).length;
+    var hoy = data.tareas.filter(function(t){ return t.col==='hoy' && !t.done && !t.descartada; }).length;
+    var seg = data.tareas.filter(function(t){ return t.col==='seguimiento' && !t.done && !t.descartada; }).length;
+    var men = data.tareas.filter(function(t){ return t.col==='mensual' && !t.done && !t.descartada; }).length;
+    var done = data.tareas.filter(function(t){ return (t.done || t.col==='terminadas') && !t.descartada; }).length;
+    var imp = data.tareas.filter(function(t){ return t.imp && !t.done && t.col!=='terminadas' && !t.descartada; }).length;
     document.getElementById('stats-bar').innerHTML = '<span class="stat-chip" style="background:#ffe4e6;color:#be123c">📋 TO DO: ' + todo + '</span><span class="stat-chip hoy">📌 HOY: ' + hoy + '</span><span class="stat-chip seg">🔄 Seguimiento: ' + seg + '</span><span class="stat-chip men">📅 Mensual: ' + men + '</span><span class="stat-chip done">✅ Terminadas: ' + done + '</span>' + (imp>0?'<span class="stat-chip imp">🔴 Importantes: ' + imp + '</span>':'');
   }
 
@@ -254,13 +255,14 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
       { id:'nahuel', nombre:'🎯 Nahuel/Fede · TL AMIA', color:'#059669' },
       { id:'alex', nombre:'🏅 Alex · TL Reconocimiento + BDA', color:'#ea580c' },
     ];
-    var done = teamData.tareas.filter(function(t){ return t.done; }).length;
-    var pend = teamData.tareas.filter(function(t){ return !t.done; }).length;
-    document.getElementById('stats-equipo').innerHTML = '<span class="stat-chip hoy">📋 Total: ' + teamData.tareas.length + '</span><span class="stat-chip seg">⏳ Pendientes: ' + pend + '</span><span class="stat-chip done">✅ Terminadas: ' + done + '</span>';
+    var done = teamData.tareas.filter(function(t){ return t.done && !t.descartada; }).length;
+    var pend = teamData.tareas.filter(function(t){ return !t.done && !t.descartada; }).length;
+    var totalActivas = teamData.tareas.filter(function(t){ return !t.descartada; }).length;
+    document.getElementById('stats-equipo').innerHTML = '<span class="stat-chip hoy">📋 Total: ' + totalActivas + '</span><span class="stat-chip seg">⏳ Pendientes: ' + pend + '</span><span class="stat-chip done">✅ Terminadas: ' + done + '</span>';
     var tv = document.getElementById('team-view');
     tv.innerHTML = '';
     personas.forEach(function(p) {
-      var tareas = teamData.tareas.filter(function(t){ return t.resp === p.id; });
+      var tareas = teamData.tareas.filter(function(t){ return t.resp === p.id && !t.descartada; });
       if (tareas.length === 0) return;
       var pendCount = tareas.filter(function(t){ return !t.done; }).length;
       var div = document.createElement('div');
@@ -268,7 +270,7 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
       div.style.borderLeft = '4px solid ' + p.color;
       var rows = tareas.map(function(t) {
         var fd = fechaDisplay(t.fecha);
-        return '<div class="team-task ' + (t.done?'terminada':'') + '"><input type="checkbox" ' + (t.done?'checked':'') + ' onchange="toggleTeamDone(\'' + t.id + '\',this.checked)"><span class="team-task-text">' + (t.imp?'🔴 ':'') + t.texto + (t.proyecto?(' <span class="chip chip-' + t.proyecto + '" style="font-size:9px">' + (PROJ_NAMES[t.proyecto]||t.proyecto) + '</span>'):'') + '</span>' + (fd.text?'<span class="team-task-date ' + fd.cls + '">' + fd.text + '</span>':'') + '</div>';
+        return '<div class="team-task ' + (t.done?'terminada':'') + '"><input type="checkbox" ' + (t.done?'checked':'') + ' onchange="toggleTeamDone(\'' + t.id + '\',this.checked)"><span class="team-task-text">' + (t.imp?'🔴 ':'') + t.texto + (t.proyecto?(' <span class="chip chip-' + t.proyecto + '" style="font-size:9px">' + (PROJ_NAMES[t.proyecto]||t.proyecto) + '</span>'):'') + '</span>' + (fd.text?'<span class="team-task-date ' + fd.cls + '">' + fd.text + '</span>':'') + '<button class="card-btn" style="font-size:10px;padding:1px 4px;margin-left:4px;" title="Descartar" onclick="descartarTeam(\'' + t.id + '\')">❌</button></div>';
       }).join('');
       div.innerHTML = '<div class="team-persona-head" onclick="this.nextElementSibling.classList.toggle(\'open\')"><span class="team-persona-name" style="color:' + p.color + '">' + p.nombre + '</span><span class="team-persona-badge">' + pendCount + ' pendientes</span></div><div class="team-tasks open" id="team-' + p.id + '">' + rows + '<button class="btn-add" onclick="abrirModalTeam(\'' + p.id + '\')" style="margin:6px 0 0">&#10133; Agregar</button></div>';
       tv.appendChild(div);
@@ -367,6 +369,24 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
     t.done = checked; t.col = checked ? 'terminadas' : 'hoy';
     if (checked) t.completedAt = new Date().toISOString();
     saveData(data); renderBoard();
+  }
+
+  function descartarTarea(id) {
+    var t = data.tareas.find(function(x){ return x.id === id; });
+    if (!t) return;
+    if (!confirm('¿Descartar esta tarea? No volverá a aparecer, aunque la importación diaria la detecte de nuevo.')) return;
+    t.descartada = true;
+    t.descartadaAt = new Date().toISOString();
+    saveData(data); renderBoard();
+  }
+
+  function descartarTeam(id) {
+    var t = teamData.tareas.find(function(x){ return x.id === id; });
+    if (!t) return;
+    if (!confirm('¿Descartar esta tarea del equipo? No volverá a aparecer.')) return;
+    t.descartada = true;
+    t.descartadaAt = new Date().toISOString();
+    saveTeam(teamData); renderTeam();
   }
 
   function toggleTeamDone(id, checked) {
@@ -548,6 +568,8 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
   }
   window.editarTarea = editarTarea;
   window.cargarGmail = cargarGmail;
+  window.descartarTarea = descartarTarea;
+  window.descartarTeam = descartarTeam;
 
   // Auto-sync Gmail destacados al abrir el tablero (solo en Cowork)
   if (window.cowork) { setTimeout(cargarGmail, 1500); }
@@ -894,5 +916,34 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
     })();
 
 // ── RENDER INICIAL ──────────────────────────────────────────────────────────
+  // ── BARRIDO 24/06/2026 ──────────────────────────────────
+  // Fuentes: ZLE Demo interna 23/06 16:00 → "Validación plan de Lucio ZL Store" (Gemini)
+  //          Gmail ⭐ Eventbrite — Vic F regaló entrada Congreso Nacional Pyme 2026 (29/06)
+  //          Agenda hoy 24/06: Daily TL 9:45 (sin minuta aún) | Empower 12:45 | Montessori 14:00 | ZLE Presentación avances 16:00 | La Liga 16:30 | Reu Lautaro 17:15
+  (function importarBarrido24062026() {
+    var ahora = new Date().toISOString();
+    var nuevasVicky = [
+      { id:'b2406v1', texto:'ZL Store — Crear formulario para recopilar las direcciones de los miembros del equipo y determinar un punto de encuentro común para la reunión presencial del equipo (acordado con Bruno en demo interna)', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-26', origen:'ZLE Demo interna 23/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2406v2', gmailThreadId:'19ef601a2d13ee6f', texto:'Eventbrite — Reclamar entrada para Congreso Nacional Pyme 2026 (lunes 29/06 8:00, Centro de Convenciones Buenos Aires) que Victoria Fornieles le consiguió', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-26', origen:'Gmail ⭐ Eventbrite 23/06 — Vic F', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'b2406v3', texto:'Agenda 24/06 — Empower Reu con Vicky L 12:45hs (Google Meet)', col:'hoy', proyecto:'power', resp:'vicky', fecha:'2026-06-24', origen:'Agenda 24/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2406v4', texto:'Agenda 24/06 — Montessori: Reu con Vic L 14:00hs (Google Meet con Lucas Da Silva, J Luque Herbas, Pilar Luna)', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'2026-06-24', origen:'Agenda 24/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2406v5', texto:'Agenda 24/06 — ZLE Presentación avances 16:00hs (con osa2010121, feraduriz, fcreddo, Lucio, Bruno) — incluir corrección de errores críticos previa al despliegue', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-24', origen:'Agenda 24/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'b2406v6', texto:'Agenda 24/06 — La Liga con Vic 16:30hs (Google Meet con alumnos@)', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'2026-06-24', origen:'Agenda 24/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2406v7', texto:'Agenda 24/06 — Reu con VF y VL (Lautaro Waisgold) 17:15hs (Google Meet) — revisar propuesta de posteo LinkedIn para clientes', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-24', origen:'Agenda 24/06', imp:false, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agV = 0;
+    nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+    if (agV > 0) saveData(data);
+    var nuevasTeam = [
+      { id:'b2406t1', texto:'ZL Store — Corregir los errores de consola que aparecen al agregar productos al carrito y al crear la orden. Validar el flujo de carga para evitar el conflicto 409 y garantizar que el proceso de compra funcione correctamente antes del despliegue en producción (junto con Gonzalo Avalos y Agostina Abril)', resp:'lucio', proyecto:'zlo', fecha:'2026-06-24', imp:true, done:false, origen:'ZLE Demo interna 23/06 — Gemini', createdAt:ahora },
+      { id:'b2406t2', texto:'ZL Store — Subir al tablero de control todos los errores reportados en el PR que aún persisten, priorizando los elementos críticos que el cliente no ha detectado (pedido de Bruno tras el despliegue)', resp:'lucio', proyecto:'zlo', fecha:'2026-06-25', imp:true, done:false, origen:'ZLE Demo interna 23/06 — Gemini', createdAt:ahora },
+    ];
+    var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+    var agT = 0;
+    nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+    if (agT > 0) saveTeam(teamData);
+  })();
+
   renderBoard();
   setTimeout(function(){ if(typeof setupColDrop === "function") setupColDrop(); }, 100);
