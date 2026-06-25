@@ -113,6 +113,8 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
     var cambiaron = false;
     data.tareas.forEach(function(t) {
       if (t.done || t.col === 'hoy' || t.col === 'terminadas' || t.descartada) return;
+      // Respetar movimientos manuales: si la usuaria movió esta tarea, no la auto-promovemos hasta que ella la vuelva a HOY
+      if (t.userPinned) return;
       // CUALQUIER COLUMNA → HOY: si la fecha de vencimiento llegó o pasó
       if (t.fecha) {
         var venc = new Date(t.fecha); venc.setHours(0,0,0,0);
@@ -341,7 +343,18 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
       var t = data.tareas.find(function(x){ return x.id === editId; });
       if (t) {
         t.texto = texto;
-        t.col = document.getElementById('f-col').value;
+        var nuevoCol = document.getElementById('f-col').value;
+        if (nuevoCol !== t.col) {
+          if (nuevoCol === 'hoy') {
+            delete t.userPinned;
+            t.lastMovedToHoy = ahora;
+          } else {
+            t.userPinned = true;
+            t.userPinnedAt = ahora;
+          }
+          delete t.promoBadge;
+        }
+        t.col = nuevoCol;
         t.proyecto = document.getElementById('f-proyecto').value;
         t.resp = document.getElementById('f-resp').value;
         t.fecha = document.getElementById('f-fecha').value;
@@ -401,7 +414,13 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
     var t = data.tareas.find(function(x){ return x.id === id; });
     if (!t) return;
     t.col = col; t.done = false;
-    if (col === 'hoy') t.lastMovedToHoy = new Date().toISOString();
+    if (col === 'hoy') {
+      t.lastMovedToHoy = new Date().toISOString();
+      delete t.userPinned;
+    } else {
+      t.userPinned = true;
+      t.userPinnedAt = new Date().toISOString();
+    }
     delete t.promoBadge;
     saveData(data); renderBoard();
   }
