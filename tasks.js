@@ -973,6 +973,41 @@ var HOY = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
       saveData(data);
     }
   })();
+  // ── BARRIDO 25/06/2026 ──────────────────────────────────
+  // Fuentes: Daily TL 24/06 09:45 (Gemini) | ZLE Presentación avances 24/06 16:00 (Gemini, cliente Fer Galeano Adúriz + Franco Creddo) | Reu Lautaro Waisgold 24/06 17:15 (Gemini)
+  // Agenda 25/06: Daily TL 9:45 (sin minuta aún) | Working session Accenture 10:00 Teams | Montessori 14:00
+  (function importarBarrido25062026() {
+    var ahora = new Date().toISOString();
+    var nuevasVicky = [
+      { id:'b2506v1', texto:'Oficios — Testear los cambios en el proyecto Oficios tras la actualización de credenciales que Seba aplicó (incluye nuevas credenciales de emails). Seba ya creó credenciales nuevas y avisó que podría haber quedado algo pendiente; testear todo el flujo', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-25', origen:'Daily TL 24/06 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'b2506v2', texto:'Coordinación — Comunicar a todos los colaboradores la política de solicitar días de estudio con antelación en lugar de hacerlo el mismo día del examen (caso Mariel y otros chicos de Reconocimiento que avisaron el mismo día). Pedido explícito de Bruno en Daily', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-26', origen:'Daily TL 24/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2506v3', texto:'ZLE — Enviar a Fernando Galeano Adúriz la propuesta técnica que arma Bruno el jueves 25/06 para transformar la funcionalidad de la nueva plataforma web ZL Store en una aplicación móvil (reemplazando la app de escritorio actual). Bruno se junta con el equipo y la elabora; Vicky la manda', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-26', origen:'ZLE Presentación avances 24/06 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'b2506v4', texto:'ZLE — Coordinar respaldo (backup) de base de datos y archivos del sitio actual de ZL Store (URL antigua Wiccom) antes del cambio de DNS, para preservar la información histórica. Eric quiere mantener la web vieja en otro dominio por unas semanas/meses hasta que se acostumbren al sistema nuevo. Vicky tiene los accesos al hosting actual', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-25', origen:'ZLE Presentación avances 24/06 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'b2506v5', texto:'ZLE — Esperar confirmación de Fernando Galeano Adúriz hoy 25/06 a la mañana sobre pruebas de las funcionalidades de stock (mensajes de advertencia + bloqueo de compra sin stock). Si confirma OK, ejecutar el cambio de DNS hoy jueves para tener al equipo de soporte disponible en caso de eventualidad (recomendación de Bruno: no hacerlo el viernes para no quedar sin soporte el fin de semana)', col:'hoy', proyecto:'zlo', resp:'vicky', fecha:'2026-06-25', origen:'ZLE Presentación avances 24/06 — Gemini', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'b2506v6', texto:'ZLE — Hacer follow-up con Fernando Galeano Adúriz y Franco Creddo para que respondan la propuesta enviada de la etapa 2 + sección de analíticas (boceto ya visible en dashboard de ZLE) para darle continuidad al desarrollo del proyecto', col:'seguimiento', proyecto:'zlo', resp:'vicky', fecha:'2026-06-30', origen:'ZLE Presentación avances 24/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2506v7', texto:'Comunicación LinkedIn — Validar (junto con Vic Fornieles) los carruseles que prepare Lautaro Waisgold cuando avise por Discord, antes de publicar. Foco: tono profesional centrado en PYMES, precios competitivos, sacar mención excesiva de financiamiento de seniors/juniors (genera confusión en licitaciones), agregar hashtags como transformación digital e innovación', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu Lautaro Waisgold 24/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2506v8', texto:'Comunicación LinkedIn — Investigar y compartir con Lautaro la mejor práctica para publicar en LinkedIn: si conviene postear desde el perfil personal o desde la página empresa de ForIT para mantener consistencia y luego replicar/compartir', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Reu Lautaro Waisgold 24/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2506v9', texto:'Agenda 25/06 — Daily TL 9:45hs (Google Meet)', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-25', origen:'Agenda 25/06', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2506v10', texto:'Agenda 25/06 — Working sessions Talleres ForIT con Accenture 10:00hs (Mariana Solari, Celina Davola, Julia Galarce, Marcos Traversaro, Florencia Val) — vía MS Teams. Inicio del relevamiento de información mediante talleres de entrevista', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'2026-06-25', origen:'Agenda 25/06', imp:true, addedDate:ahora, createdAt:ahora },
+      { id:'b2506v11', texto:'Agenda 25/06 — Montessori: Reu con Vic L 14:00hs (Google Meet con Lucas Da Silva, J Luque Herbas, Pilar Luna)', col:'hoy', proyecto:'montessori', resp:'vicky', fecha:'2026-06-25', origen:'Agenda 25/06', imp:false, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agV = 0;
+    nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+    if (agV > 0) saveData(data);
+    var nuevasTeam = [
+      { id:'b2506t1', texto:'AMIA / Transversal — Compartir con todo el equipo TL la skill/prompt de revisión de pull requests que se ejecuta con un comando (la viene usando Martina en Liga con muy buenos resultados, ayuda con cobertura de tests, seguridad y corrección de bugs). Pasarla en el canal compartido', resp:'nahuel', proyecto:'amia', fecha:'2026-06-25', imp:true, done:false, origen:'Daily TL 24/06 — Gemini', createdAt:ahora },
+      { id:'b2506t2', texto:'AMIA / DevOps — Coordinar con Seba la implementación de pipelines/runners en un servidor para correr validaciones automáticas (lint, tests, end-to-end) en cada proyecto. Hoy se hacen las validaciones en local pero ya hubo casos en que anduvo en local y no en DEP. Definir ubicación de runners en servidor exclusivo', resp:'nahuel', proyecto:'amia', fecha:'2026-06-29', imp:true, done:false, origen:'Daily TL 24/06 — Gemini', createdAt:ahora },
+      { id:'b2506t3', texto:'DevOps — Habilitar runners en servidor exclusivo para correr pipelines de validación en cada proyecto (lint, tests, e2e). Coordinar con Nahuel la ubicación específica y el setup. Objetivo: replicar el entorno de DEP y prevenir fallos por divergencia local vs servidor', resp:'seba', proyecto:'coordi', fecha:'2026-06-29', imp:true, done:false, origen:'Daily TL 24/06 — Gemini', createdAt:ahora },
+      { id:'b2506t4', texto:'ZL Store — Agregar el nombre específico del producto sin existencias en el mensaje de error del carrito de compras (pedido explícito de Fernando Galeano Adúriz: cuando un cliente arma carrito y un producto se queda sin stock, hoy no se indica cuál es; tienen que ir probando uno por uno). Mensaje sugerido: "no hay stock del producto X"', resp:'lucio', proyecto:'zlo', fecha:'2026-06-26', imp:true, done:false, origen:'ZLE Presentación avances 24/06 — Gemini', createdAt:ahora },
+      { id:'b2506t5', texto:'ZL Store — Implementar un filtro/selector "con stock / sin stock / solo con stock" en la búsqueda de productos: por defecto mostrar solo los productos con stock disponible, y dar un botón/toggle para incluir agotados si el usuario quiere verlos (acordado con Fernando Galeano Adúriz como mejora de UX)', resp:'lucio', proyecto:'zlo', fecha:'2026-06-29', imp:false, done:false, origen:'ZLE Presentación avances 24/06 — Gemini', createdAt:ahora },
+    ];
+    var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+    var agT = 0;
+    nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+    if (agT > 0) saveTeam(teamData);
+  })();
+
 
   renderBoard();
   setTimeout(function(){ if(typeof setupColDrop === "function") setupColDrop(); }, 100);
