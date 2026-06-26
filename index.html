@@ -362,6 +362,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   })();
 
 
+  (function importarBarrido260626() {
+    var ahora = new Date().toISOString();
+    var nuevasVicky = [
+      { id:'b2606v1', texto:'Validar manual de flujo de Nahuel: revisar contenido y tono del manual del sistema (lenguaje informal para usuarios externos)', col:'hoy', proyecto:'amia', resp:'vicky', fecha:'', origen:'Daily TL 26/06 — Gemini', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2606v2', texto:'Informar a Martina aclaración de Javier (Liga): quiere "resetear partido" (no eliminarlo) — reset disponible para instituciones que cerren planilla por error', col:'hoy', proyecto:'liga', resp:'vicky', fecha:'', origen:'Mail Javier 25/06 ⭐', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2606v3', texto:'Revisar minuta Taller 1 Accenture (Workshop Relevamiento #1 del 25/06) y definir próximos pasos', col:'hoy', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Mail Accenture 25/06 ⭐', imp:false, addedDate:ahora, createdAt:ahora },
+      { id:'b2606v4', texto:'Dar seguimiento al pago pendiente de cierre BDA con directoalrescate@redbda.org.ar (confirmación de depósito requerida)', col:'seguimiento', proyecto:'coordi', resp:'vicky', fecha:'', origen:'Mail BDA traspaso 24/06 ⭐', imp:false, addedDate:ahora, createdAt:ahora },
+    ];
+    var idsV = new Set(data.tareas.map(function(t){ return t.id; }));
+    var agV = 0;
+    nuevasVicky.forEach(function(t){ if (!idsV.has(t.id)) { data.tareas.push(t); agV++; } });
+    if (agV > 0) saveData(data);
+
+    var nuevasTeam = [
+      { id:'b2606t1', texto:'Analizar desfasaje entre tareas en done y PRs mergeadas del equipo reconocimiento (20 tareas sin PR correspondiente)', resp:'agus', proyecto:'power', fecha:'', imp:false, done:false, origen:'Daily TL 26/06 — Gemini', createdAt:ahora },
+      { id:'b2606t2', texto:'Contactar cliente ZLO con urgencia: sin respuesta a comunicaciones previas sobre temas pendientes de prioridad', resp:'lucio', proyecto:'zlo', fecha:'', imp:true, done:false, origen:'Daily TL 26/06 — Gemini', createdAt:ahora },
+    ];
+    var idsT = new Set(teamData.tareas.map(function(t){ return t.id; }));
+    var agT = 0;
+    nuevasTeam.forEach(function(t){ if (!idsT.has(t.id)) { teamData.tareas.push(t); agT++; } });
+    if (agT > 0) saveTeam(teamData);
+  })();
+
 </script>
 </body>
 </html>
